@@ -278,14 +278,15 @@ public class Board : MonoBehaviour
 
     #region ReFill
 
-    // 대기열에 좌표를 임시로 담아둔다.
-    public Queue<Background> ReFillCubeColQueue = new Queue<Background>();        // 스왑으로 생긴 빈공간의 좌표를 담을 큐
+    private Vector2 changePos;
     public Queue<Background> NewFillCubeColQueue = new Queue<Background>();       // 큐브를 정리한 후 생긴 빈공간의 좌표를 담을 큐
 
     // 빈공간을 정렬하는 메서드
     public void ReFillCubeCol(int col, int emptyCount)
     {
         int endNull = 0;
+
+        // 빈공간을 체크하는 logic (첫번째 null 만 체크한다)
         for (int x = 0; x < amountX; x++)
         {
             for (int y = 0; y < amountY; y++)
@@ -294,20 +295,15 @@ public class Board : MonoBehaviour
                 {
                     if (cubes[x, y] == null)
                     {
-                        ReFillCubeColQueue.Enqueue(backgrounds[x, y]);
-                        //cubes[x, y].GetComponent<Cube>().InitCoord(x, y - emptyCount);      // 새로 바뀔좌표로 리셋
-                        //cubes[x, y - emptyCount] = cubes[x, y];
-                        //cubes[x, y].GetComponent<Cube>().SetPosition(ReFillCubeColQueue.Dequeue());
-                        //cubes[x, y] = null;
-
-                        if (ReFillCubeColQueue.Count == 3)
-                        {
-                            endNull = y;
-                        }
+                        changePos = backgrounds[x, y].transform.position;
+                        endNull = y + 3;
+                        break;
                     }
                 }
             }
         }
+
+        // 빈공간으로 채워넣는 logic
 
         for (int x = 0; x < amountX; x++)
         {
@@ -317,18 +313,24 @@ public class Board : MonoBehaviour
                 {
                     if (cubes[x, y] != null)
                     {
+                        //if (ReFillCubeColQueue.Count == 0)
+                        //{
+                        //    break;
+                        //}
+
                         cubes[x, y].GetComponent<Cube>().InitCoord(x, y - emptyCount);      // 새로 바뀔좌표로 리셋
                         cubes[x, y - emptyCount] = cubes[x, y];
-                        cubes[x, y].GetComponent<Cube>().SetPosition(ReFillCubeColQueue.Dequeue().transform.position);
+                        cubes[x, y].GetComponent<Cube>().SetPosition(changePos);
                         cubes[x, y] = null;
                     }
                 }
+
+                changePos = new Vector3(changePos.x, changePos.y += IntervalY);
             }
         }
 
         NewFillCubeCol(col);
         CheckCount();
-        ReFillCubeColQueue.Clear();
     }
 
     // 새로운 큐브를 생성하는 메서드
@@ -356,7 +358,7 @@ public class Board : MonoBehaviour
     {
         for (int i = 0; i < nullCount; i++)
         {
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.1f);                                                              // 겹치지 않게 딜레이를 줌.
             int ColorIndex = UnityEngine.Random.Range(0, cubeColors.Length);                                    // 색깔을 랜덤으로 뽑기
             GameObject cubeObj = Instantiate(cubePf, spawners[col].transform.position, Quaternion.identity);    // 새로운 큐브 생성
             cubeObj.transform.parent = transform;                                                               // 오브젝트 부모 지정
@@ -384,6 +386,7 @@ public class Board : MonoBehaviour
         SecondCube.transform.position = TempPos;
     }
 
+    // 메모리 주소를 넘겨줘서 실질적인 값을 바꿔준다.
     public void SwapPos(ref int x1, ref int y1, ref int x2, ref int y2)
     {
         int tempX1 = x1;
