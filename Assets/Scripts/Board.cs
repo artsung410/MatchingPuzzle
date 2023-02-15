@@ -2,47 +2,398 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class Board : MonoBehaviour
 {
+    public static Action onSwapEvent;
+
     public int amountX; // 가로 수량
     public int amountY; // 세로 수량
-    public int InitPosX; 
+    public int InitPosX;
     public int InitPosY;
     public int IntervalX;
     public int IntervalY;
 
     public GameObject cubePf;   // 타일 프리팹
+    public GameObject backgroundPf;  // 투명한 프리팹 (좌표용)
+    public GameObject spawnerPf; // 스포너 프리팹
+
     public Color[] cubeColors; // 타일의 색상 종류
     public GameObject[,] cubes; // 모든 타일을 2차원 배열에 넣기
+    public GameObject[] spawners;  // 새로운 스포너 1처원 배열에 넣기
+    public Background[,] backgrounds; // 좌표 전용객체 2차원 배열에 넣기
 
     public bool IsPickCube = false; // 타일을 쥐고있는지 판별
     public GameObject currnetPickCube; // 현재 쥐고있는 타일
+    public PuzzleMatcher puzzleMatcher;  // 체크하고 있는 놈
 
+    private void Awake()
+    {
+        puzzleMatcher = GetComponent<PuzzleMatcher>();
+    }
 
     void Start()
     {
         cubes = new GameObject[amountX, amountY];
+        spawners = new GameObject[amountX];
+        backgrounds = new Background[amountX, amountY];
         Init();
     }
 
-    // 맵을 그리는 과정
+    // 퍼즐 생성
+
+    #region MakePuzzle
     private void Init()
     {
-        for(int x = 0; x < amountX; x++)
+        for (int x = 0; x < amountX; x++)
         {
             for (int y = 0; y < amountY; y++)
             {
-                Vector2 newPosition = new Vector2(InitPosX + x * IntervalX, InitPosY + y * IntervalY);
-                int ColorIndex = Random.Range(0, cubeColors.Length);   // 색깔을 랜덤으로 뽑기
+                Vector2 newPos = new Vector2(InitPosX + x * IntervalX, InitPosY + y * IntervalY);
+                //int ColorIndex = Random.Range(0, cubeColors.Length);   // 색깔을 랜덤으로 뽑기
 
-                GameObject cubeObj = Instantiate(cubePf, newPosition, Quaternion.identity);
+                GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
+                GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
+                coordObj.transform.parent = transform;
+
                 Cube cube = cubeObj.GetComponent<Cube>();
-                cube.GetComponent<Image>().color = cubeColors[ColorIndex];
-                cube.Init(x, y);
-                cubeObj.transform.parent = this.transform;
+                Background coord = coordObj.GetComponent<Background>();
+
+                if (y == 2 || y == 5)
+                {
+                    cube.GetComponent<Image>().color = cubeColors[1];
+                    cube.Type = 1;
+                }
+                else
+                {
+                    cube.GetComponent<Image>().color = cubeColors[0];
+                    cube.Type = 0;
+                }
+
+                cube.InitCoord(x, y);
+                cube.gameObject.name = $"({x}, {y})";
+                cubeObj.transform.parent = transform;
                 cubes[x, y] = cubeObj;
+
+                coord.InitCoord(x, y);
+                backgrounds[x, y] = coord;
+
+                // 맨 위에 스포너 설치
+                if (y == (amountY - 1))
+                {
+                    Vector2 spawnerPos = new Vector2(newPos.x, newPos.y + IntervalY);
+                    GameObject spawner = Instantiate(spawnerPf, spawnerPos, Quaternion.identity);
+                    spawners[x] = spawner;
+                }
             }
         }
     }
+
+    // 가로 5줄   
+    public void customRendering_For3RowPattern()
+    {
+        EraseRendering();
+
+        amountX = 5;
+        amountY = 1;
+
+        cubes = new GameObject[amountX, amountY];
+        backgrounds = new Background[amountX, amountY];
+        spawners = new GameObject[amountX];
+
+        for (int x = 0; x < amountX; x++)
+        {
+            for (int y = 0; y < amountY; y++)
+            {
+                Vector2 newPos = new Vector2(InitPosX + x * IntervalX, InitPosY + y * IntervalY);
+
+                GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
+                GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
+                coordObj.transform.parent = transform;
+
+                Cube cube = cubeObj.GetComponent<Cube>();
+                Background coord = coordObj.GetComponent<Background>();
+
+                if (x == 2)
+                {
+                    cube.SetColor(cubeColors[1], 1);
+                }
+                else
+                {
+                    cube.SetColor(cubeColors[0], 0);
+                }
+
+                cube.InitCoord(x, y);
+                cubeObj.transform.parent = transform;
+                cubes[x, y] = cubeObj;
+                backgrounds[x, y] = coord;
+
+                // 맨 위에 스포너 설치
+                if (y == (amountY - 1))
+                {
+                    Vector2 spawnerPos = new Vector2(newPos.x, newPos.y + IntervalY);
+                    GameObject spawner = Instantiate(spawnerPf, spawnerPos, Quaternion.identity);
+                    spawners[x] = spawner;
+                }
+            }
+        }
+    }
+
+    // 세로 5줄
+    public void customRendering_For3ColPattern()
+    {
+        EraseRendering();
+
+        amountX = 1;
+        amountY = 5;
+        cubes = new GameObject[amountX, amountY];
+        backgrounds = new Background[amountX, amountY];
+        spawners = new GameObject[amountX];
+
+        for (int x = 0; x < amountX; x++)
+        {
+            for (int y = 0; y < amountY; y++)
+            {
+                Vector2 newPos = new Vector2(InitPosX + x * IntervalX, InitPosY + y * IntervalY);
+
+                GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
+                GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
+                coordObj.transform.parent = transform;
+
+                Cube cube = cubeObj.GetComponent<Cube>();
+                Background coord = coordObj.GetComponent<Background>();
+
+                if (y == 2)
+                {
+                    cube.GetComponent<Image>().color = cubeColors[1];
+                    cube.Type = 1;
+                }
+                else
+                {
+                    cube.GetComponent<Image>().color = cubeColors[0];
+                    cube.Type = 0;
+                }
+
+                cube.InitCoord(x, y);
+                cubeObj.transform.parent = transform;
+                cubes[x, y] = cubeObj;
+                backgrounds[x, y] = coord;
+
+                // 맨 위에 스포너 설치
+                if (y == (amountY - 1))
+                {
+                    Vector2 spawnerPos = new Vector2(newPos.x, newPos.y + IntervalY);
+                    GameObject spawner = Instantiate(spawnerPf, spawnerPos, Quaternion.identity);
+                    spawners[x] = spawner;
+                }
+            }
+        }
+    }
+
+    // 3x2
+    public void customRendering_ForSquarePattern()
+    {
+        EraseRendering();
+
+        amountX = 3;
+        amountY = 2;
+        cubes = new GameObject[amountX, amountY];
+        backgrounds = new Background[amountX, amountY];
+        spawners = new GameObject[amountX];
+
+        for (int x = 0; x < amountX; x++)
+        {
+            for (int y = 0; y < amountY; y++)
+            {
+                Vector2 newPos = new Vector2(InitPosX + x * IntervalX, InitPosY + y * IntervalY);
+                //int ColorIndex = Random.Range(0, cubeColors.Length);   // 색깔을 랜덤으로 뽑기
+
+                GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
+                GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
+                coordObj.transform.parent = transform;
+
+                Cube cube = cubeObj.GetComponent<Cube>();
+                Background coord = coordObj.GetComponent<Background>();
+
+                if ((x == 1 && y == 0) || (x == 2 && y == 1))
+                {
+                    cube.GetComponent<Image>().color = cubeColors[1];
+                    cube.Type = 1;
+                }
+                else
+                {
+                    cube.GetComponent<Image>().color = cubeColors[0];
+                    cube.Type = 0;
+                }
+
+                cube.InitCoord(x, y);
+                cubeObj.transform.parent = this.transform;
+                cubes[x, y] = cubeObj;
+                backgrounds[x, y] = coord;
+
+                // 맨 위에 스포너 설치
+                if (y == (amountY - 1))
+                {
+                    Vector2 spawnerPos = new Vector2(newPos.x, newPos.y + IntervalY);
+                    GameObject spawner = Instantiate(spawnerPf, spawnerPos, Quaternion.identity);
+                    spawners[x] = spawner;
+                }
+            }
+        }
+    }
+
+    public void EraseRendering()
+    {
+        for (int x = 0; x < amountX; x++)
+        {
+            for (int y = 0; y < amountY; y++)
+            {
+                Destroy(cubes[x, y]);
+                cubes[x, y] = null;
+            }
+
+            Destroy(spawnerPf);
+            spawners[x] = null;
+        }
+
+        cubes = null;
+        backgrounds = null;
+        spawnerPf = null;
+    }
+    #endregion
+
+    #region NullCount
+    public void CheckCount()
+    {
+        for (int x = 0; x < amountX; x++)
+        {
+            for (int y = 0; y < amountY; y++)
+            {
+                Debug.Log(cubes[x, y]);
+            }
+        }
+    }
+    #endregion
+
+    #region ReFill
+
+    // 대기열에 좌표를 임시로 담아둔다.
+    public Queue<Background> ReFillCubeColQueue = new Queue<Background>();        // 스왑으로 생긴 빈공간의 좌표를 담을 큐
+    public Queue<Background> NewFillCubeColQueue = new Queue<Background>();       // 큐브를 정리한 후 생긴 빈공간의 좌표를 담을 큐
+
+    // 빈공간을 정렬하는 메서드
+    public void ReFillCubeCol(int col, int emptyCount)
+    {
+        int endNull = 0;
+        for (int x = 0; x < amountX; x++)
+        {
+            for (int y = 0; y < amountY; y++)
+            {
+                if (x == col)
+                {
+                    if (cubes[x, y] == null)
+                    {
+                        ReFillCubeColQueue.Enqueue(backgrounds[x, y]);
+                        //cubes[x, y].GetComponent<Cube>().InitCoord(x, y - emptyCount);      // 새로 바뀔좌표로 리셋
+                        //cubes[x, y - emptyCount] = cubes[x, y];
+                        //cubes[x, y].GetComponent<Cube>().SetPosition(ReFillCubeColQueue.Dequeue());
+                        //cubes[x, y] = null;
+
+                        if (ReFillCubeColQueue.Count == 3)
+                        {
+                            endNull = y;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int x = 0; x < amountX; x++)
+        {
+            for (int y = endNull; y < amountY; y++)
+            {
+                if (x == col)
+                {
+                    if (cubes[x, y] != null)
+                    {
+                        cubes[x, y].GetComponent<Cube>().InitCoord(x, y - emptyCount);      // 새로 바뀔좌표로 리셋
+                        cubes[x, y - emptyCount] = cubes[x, y];
+                        cubes[x, y].GetComponent<Cube>().SetPosition(ReFillCubeColQueue.Dequeue().transform.position);
+                        cubes[x, y] = null;
+                    }
+                }
+            }
+        }
+
+        NewFillCubeCol(col);
+        CheckCount();
+        ReFillCubeColQueue.Clear();
+    }
+
+    // 새로운 큐브를 생성하는 메서드
+    public void NewFillCubeCol(int col)
+    {
+        int nullCount = 0;
+
+        for (int x = 0; x < amountX; x++)
+        {
+            for (int y = 0; y < amountY; y++)
+            {
+                if (cubes[x, y] == null)
+                {
+                    ++nullCount;
+                    NewFillCubeColQueue.Enqueue(backgrounds[x, y]);
+                }
+            }
+        }
+
+        StartCoroutine(DelaySpawn(col, nullCount));
+    }
+
+    // 새로운 큐브를 생성하는 코루틴
+    private IEnumerator DelaySpawn(int col, int nullCount)
+    {
+        for (int i = 0; i < nullCount; i++)
+        {
+            yield return new WaitForSeconds(0.1f);
+            int ColorIndex = UnityEngine.Random.Range(0, cubeColors.Length);                                    // 색깔을 랜덤으로 뽑기
+            GameObject cubeObj = Instantiate(cubePf, spawners[col].transform.position, Quaternion.identity);    // 새로운 큐브 생성
+            cubeObj.transform.parent = transform;                                                               // 오브젝트 부모 지정
+
+            Cube cube = cubeObj.GetComponent<Cube>();
+            Background background = NewFillCubeColQueue.Dequeue();
+            cube.SetPosition(background.transform.position);                                                    // 새롭게 생긴 빈공간으로 큐브 넣기
+            cube.InitCoord(col, background.Y);                                                                  // 백그라운드 필드좌표와 동일한 좌표 설정
+            cubes[col, background.Y] = cubeObj;                                                                 // 백그라운드 필드좌표와 동일한 좌표 설정
+            cube.SetColor(cubeColors[ColorIndex], ColorIndex);                                                  // 색깔 바꿔주기
+        }
+    }
+
+    #endregion
+
+    #region Swap
+    public void SwapObj(Cube firstCube, Cube SecondCube)
+    {
+        GameObject tempCube = cubes[firstCube.X, firstCube.Y];
+        cubes[firstCube.X, firstCube.Y] = cubes[SecondCube.X, SecondCube.Y];
+        cubes[SecondCube.X, SecondCube.Y] = tempCube;
+
+        Vector2 TempPos = firstCube.transform.position;
+        firstCube.transform.position = SecondCube.transform.position;
+        SecondCube.transform.position = TempPos;
+    }
+
+    public void SwapPos(ref int x1, ref int y1, ref int x2, ref int y2)
+    {
+        int tempX1 = x1;
+        x1 = x2;
+        x2 = tempX1;
+
+        int tempY1 = y1;
+        y1 = y2;
+        y2 = tempY1;
+    }
+
+    #endregion
 }
