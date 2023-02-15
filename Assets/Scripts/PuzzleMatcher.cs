@@ -36,6 +36,7 @@ public class PuzzleMatcher : MonoBehaviour
     {
         //Board.onSwapEvent += CheckPattern_3Row;
         Board.onSwapEvent += CheckPattern_3Col;
+        Board.onReconfirmEvent += CheckPattern_3Col;
         //Board.onSwapEvent += CheckPattern_Square;
     }
 
@@ -83,7 +84,7 @@ public class PuzzleMatcher : MonoBehaviour
     //}
 
 
-    public void CheckPattern_3Col()
+    private void CheckPattern_3Col()
     {
         Debug.Log("스왑 이벤트");
         int checkCount = 3;
@@ -192,6 +193,7 @@ public class PuzzleMatcher : MonoBehaviour
     {
         //Board.onSwapEvent -= CheckPattern_3Row;
         Board.onSwapEvent -= CheckPattern_3Col;
+        Board.onReconfirmEvent -= CheckPattern_3Col;
         //Board.onSwapEvent -= CheckPattern_Square;
     }
 }

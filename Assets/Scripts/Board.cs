@@ -7,6 +7,7 @@ using System;
 public class Board : MonoBehaviour
 {
     public static Action onSwapEvent;
+    public static Action onReconfirmEvent;
 
     public int amountX; // 가로 수량
     public int amountY; // 세로 수량
@@ -313,11 +314,6 @@ public class Board : MonoBehaviour
                 {
                     if (cubes[x, y] != null)
                     {
-                        //if (ReFillCubeColQueue.Count == 0)
-                        //{
-                        //    break;
-                        //}
-
                         cubes[x, y].GetComponent<Cube>().InitCoord(x, y - emptyCount);      // 새로 바뀔좌표로 리셋
                         cubes[x, y - emptyCount] = cubes[x, y];
                         cubes[x, y].GetComponent<Cube>().SetPosition(changePos);
@@ -325,7 +321,7 @@ public class Board : MonoBehaviour
                     }
                 }
 
-                changePos = new Vector3(changePos.x, changePos.y += IntervalY);
+                changePos = new Vector3(changePos.x, changePos.y += IntervalY);             // 타겟좌표를 위로 한칸씩 이동시킨다
             }
         }
 
@@ -370,6 +366,14 @@ public class Board : MonoBehaviour
             cubes[col, background.Y] = cubeObj;                                                                 // 백그라운드 필드좌표와 동일한 좌표 설정
             cube.SetColor(cubeColors[ColorIndex], ColorIndex);                                                  // 색깔 바꿔주기
         }
+
+        StartCoroutine(DelayReconfirm());
+    }
+
+    private IEnumerator DelayReconfirm()
+    {
+        yield return new WaitForSeconds(0.5f);
+        onReconfirmEvent?.Invoke();
     }
 
     #endregion
