@@ -11,6 +11,10 @@ public class Board : MonoBehaviour
 
     public int amountX; // 가로 수량
     public int amountY; // 세로 수량
+
+    public int cubeCountX = 0;
+    public int cubeCountY = 0;
+
     public int InitPosX;
     public int InitPosY;
     public int IntervalX;
@@ -30,6 +34,9 @@ public class Board : MonoBehaviour
 
     [SerializeField]
     private GameObject emptyPf;   // 빈구멍 프리팹
+
+    [SerializeField]
+    private int emptyCount;   // 빈구멍 개수 (한 행)
 
     [SerializeField]
     private GameObject backgroundPf;  // 투명한 프리팹 (좌표용)
@@ -54,12 +61,16 @@ public class Board : MonoBehaviour
         puzzleMatcher = GetComponent<PuzzleMatcher>();
     }
 
+
     void Start()
     {
+        cubeCountX = amountX - emptyCount;
+        cubeCountY = amountY - emptyCount;
+
         int cellCount = stagesDB.Entities.Count;
-        cubes = new GameObject[amountX, amountY];
-        spawners = new GameObject[amountX];
-        backgrounds = new Background[amountX, amountY];
+        cubes = new GameObject[amountX - emptyCount, amountY - emptyCount];
+        spawners = new GameObject[amountX - emptyCount];
+        backgrounds = new Background[amountX - emptyCount, amountY - emptyCount];
         cubeInitials = new string[amountX, amountY];
 
         for (int y = 0; y < cellCount; y++)
@@ -102,19 +113,19 @@ public class Board : MonoBehaviour
                 if (cubeInitials[x, y] == "r" || cubeInitials[x, y] == "y" || cubeInitials[x, y] == "g" || cubeInitials[x, y] == "p")
                 {
                     GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
-                    GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
-                    coordObj.transform.parent = transform;
+                    GameObject backGroundObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
+                    backGroundObj.transform.parent = transform;
 
                     Cube cube = cubeObj.GetComponent<Cube>();
-                    Background coord = coordObj.GetComponent<Background>();
+                    Background background = backGroundObj.GetComponent<Background>();
 
-                    cube.InitCoord(x, y);
-                    cube.gameObject.name = $"({x}, {y})";
+                    cube.InitCoord(x - 1 , y - 1);
+                    cube.gameObject.name = $"({x - 1}, {y - 1})";
                     cubeObj.transform.parent = transform;
-                    cubes[x, y] = cubeObj;
+                    cubes[x - 1, y - 1] = cubeObj;
 
-                    coord.InitCoord(x, y);
-                    backgrounds[x, y] = coord;
+                    background.InitCoord(x - 1, y - 1);
+                    backgrounds[x - 1, y - 1] = background;
 
                     switch (cubeInitials[x, y])
                     {
@@ -142,11 +153,11 @@ public class Board : MonoBehaviour
                     hole.transform.parent = transform;
 
                     // 구멍 부분에 스포너 설치
-                    if (y == 0)
+                    if (y == 0 && x != 0 && x != 8)
                     {
                         GameObject spawner = Instantiate(spawnerPf, newPos, Quaternion.identity);
                         spawner.transform.parent = transform;
-                        spawners[x] = spawner;
+                        spawners[x - 1] = spawner;
                     }
 
                 }
@@ -158,186 +169,14 @@ public class Board : MonoBehaviour
             }
         }
     }
-
-    // 가로 5줄   
-    public void customRendering_For3RowPattern()
-    {
-        EraseRendering();
-
-        amountX = 5;
-        amountY = 1;
-
-        cubes = new GameObject[amountX, amountY];
-        backgrounds = new Background[amountX, amountY];
-        spawners = new GameObject[amountX];
-
-        for (int x = 0; x < amountX; x++)
-        {
-            for (int y = 0; y < amountY; y++)
-            {
-                Vector2 newPos = new Vector2(InitPosX + x * IntervalX, InitPosY + y * IntervalY);
-
-                GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
-                GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
-                coordObj.transform.parent = transform;
-
-                Cube cube = cubeObj.GetComponent<Cube>();
-                Background coord = coordObj.GetComponent<Background>();
-
-                if (x == 2)
-                {
-                    cube.SetColor(cubeColors[1], 1);
-                }
-                else
-                {
-                    cube.SetColor(cubeColors[0], 0);
-                }
-
-                cube.InitCoord(x, y);
-                cubeObj.transform.parent = transform;
-                cubes[x, y] = cubeObj;
-                backgrounds[x, y] = coord;
-
-                // 맨 위에 스포너 설치
-                if (y == (amountY - 1))
-                {
-                    Vector2 spawnerPos = new Vector2(newPos.x, newPos.y + IntervalY);
-                    GameObject spawner = Instantiate(spawnerPf, spawnerPos, Quaternion.identity);
-                    spawners[x] = spawner;
-                }
-            }
-        }
-    }
-
-    // 세로 5줄
-    public void customRendering_For3ColPattern()
-    {
-        EraseRendering();
-
-        amountX = 1;
-        amountY = 5;
-        cubes = new GameObject[amountX, amountY];
-        backgrounds = new Background[amountX, amountY];
-        spawners = new GameObject[amountX];
-
-        for (int x = 0; x < amountX; x++)
-        {
-            for (int y = 0; y < amountY; y++)
-            {
-                Vector2 newPos = new Vector2(InitPosX + x * IntervalX, InitPosY + y * IntervalY);
-
-                GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
-                GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
-                coordObj.transform.parent = transform;
-
-                Cube cube = cubeObj.GetComponent<Cube>();
-                Background coord = coordObj.GetComponent<Background>();
-
-                if (y == 2)
-                {
-                    cube.GetComponent<Image>().color = cubeColors[1];
-                    cube.Type = 1;
-                }
-                else
-                {
-                    cube.GetComponent<Image>().color = cubeColors[0];
-                    cube.Type = 0;
-                }
-
-                cube.InitCoord(x, y);
-                cubeObj.transform.parent = transform;
-                cubes[x, y] = cubeObj;
-                backgrounds[x, y] = coord;
-
-                // 맨 위에 스포너 설치
-                if (y == (amountY - 1))
-                {
-                    Vector2 spawnerPos = new Vector2(newPos.x, newPos.y + IntervalY);
-                    GameObject spawner = Instantiate(spawnerPf, spawnerPos, Quaternion.identity);
-                    spawners[x] = spawner;
-                }
-            }
-        }
-    }
-
-    // 3x2
-    public void customRendering_ForSquarePattern()
-    {
-        EraseRendering();
-
-        amountX = 3;
-        amountY = 2;
-        cubes = new GameObject[amountX, amountY];
-        backgrounds = new Background[amountX, amountY];
-        spawners = new GameObject[amountX];
-
-        for (int x = 0; x < amountX; x++)
-        {
-            for (int y = 0; y < amountY; y++)
-            {
-                Vector2 newPos = new Vector2(InitPosX + x * IntervalX, InitPosY + y * IntervalY);
-                //int ColorIndex = Random.Range(0, cubeColors.Length);   // 색깔을 랜덤으로 뽑기
-
-                GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
-                GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
-                coordObj.transform.parent = transform;
-
-                Cube cube = cubeObj.GetComponent<Cube>();
-                Background coord = coordObj.GetComponent<Background>();
-
-                if ((x == 1 && y == 0) || (x == 2 && y == 1))
-                {
-                    cube.GetComponent<Image>().color = cubeColors[1];
-                    cube.Type = 1;
-                }
-                else
-                {
-                    cube.GetComponent<Image>().color = cubeColors[0];
-                    cube.Type = 0;
-                }
-
-                cube.InitCoord(x, y);
-                cubeObj.transform.parent = this.transform;
-                cubes[x, y] = cubeObj;
-                backgrounds[x, y] = coord;
-
-                // 맨 위에 스포너 설치
-                if (y == (amountY - 1))
-                {
-                    Vector2 spawnerPos = new Vector2(newPos.x, newPos.y + IntervalY);
-                    GameObject spawner = Instantiate(spawnerPf, spawnerPos, Quaternion.identity);
-                    spawners[x] = spawner;
-                }
-            }
-        }
-    }
-
-    public void EraseRendering()
-    {
-        for (int x = 0; x < amountX; x++)
-        {
-            for (int y = 0; y < amountY; y++)
-            {
-                Destroy(cubes[x, y]);
-                cubes[x, y] = null;
-            }
-
-            Destroy(spawnerPf);
-            spawners[x] = null;
-        }
-
-        cubes = null;
-        backgrounds = null;
-        spawnerPf = null;
-    }
     #endregion
 
     #region NullCount
     public void CheckCount()
     {
-        for (int x = 0; x < amountX; x++)
+        for (int x = 0; x < cubeCountX; x++)
         {
-            for (int y = 0; y < amountY; y++)
+            for (int y = 0; y < cubeCountY; y++)
             {
                 Debug.Log(cubes[x, y]);
             }
@@ -347,49 +186,45 @@ public class Board : MonoBehaviour
 
     #region ReFill
 
-    private Vector2 changePos;
     public Queue<Background> NewFillCubeColQueue = new Queue<Background>();       // 큐브를 정리한 후 생긴 빈공간의 좌표를 담을 큐
 
     // 빈공간을 정렬하는 메서드
-    public void ReFillCubeCol(int col, int emptyCount)
+    public void ReFillCubeCol(int col, int nullCount)
     {
-        int endNull = 0;
-
         // 빈공간을 체크하는 logic (첫번째 null 만 체크한다)
-        for (int x = 0; x < amountX; x++)
+        for (int x = 0; x < cubeCountX; x++)
         {
-            for (int y = 0; y < amountY; y++)
+            // 역순(바닥부터)으로 체크한다.
+            for (int y = cubeCountY - nullCount; y >= 0; y--)
             {
                 if (x == col)
                 {
-                    if (cubes[x, y] == null)
+                    // 최상단부터 널일때 리턴시켜준다.
+                    if (cubes[x, y] == null && y == 0)
                     {
-                        changePos = backgrounds[x, y].transform.position;
-                        endNull = y + 3;
-                        break;
+                        return;
                     }
-                }
-            }
-        }
 
-        // 빈공간으로 채워넣는 logic
-
-        for (int x = 0; x < amountX; x++)
-        {
-            for (int y = endNull; y < amountY; y++)
-            {
-                if (x == col)
-                {
-                    if (cubes[x, y] != null)
+                    // 중앙에 널이 있을때
+                    else if (cubes[x, y] != null)
                     {
-                        cubes[x, y].GetComponent<Cube>().InitCoord(x, y - emptyCount);      // 새로 바뀔좌표로 리셋
-                        cubes[x, y - emptyCount] = cubes[x, y];
+                        // 좌표를 널카운트만큼 곱해서 이동시켜준다.
+                        Vector2 changePos = new Vector2(cubes[x, y].transform.position.x, cubes[x, y].transform.position.y - nullCount * IntervalY);
                         cubes[x, y].GetComponent<Cube>().SetPosition(changePos);
-                        cubes[x, y] = null;
+
+                        // 클래스의 필드값을 리셋해준다.
+                        cubes[x, y].GetComponent<Cube>().InitCoord(x, y + nullCount);
+
+                        // 2차원 배열상의 원소를 스왑해준다.
+                        cubes[x, y + nullCount] = cubes[x, y];
+
+                        // 최상단 3칸을 null로 만들어준다.
+                        if (y < nullCount)
+                        {
+                            cubes[x, y] = null;
+                        }
                     }
                 }
-
-                changePos = new Vector3(changePos.x, changePos.y += IntervalY);             // 타겟좌표를 위로 한칸씩 이동시킨다
             }
         }
 
@@ -402,9 +237,9 @@ public class Board : MonoBehaviour
     {
         int nullCount = 0;
 
-        for (int x = 0; x < amountX; x++)
+        for (int x = 0; x < cubeCountX; x++)
         {
-            for (int y = 0; y < amountY; y++)
+            for (int y = 0; y < cubeCountY; y++)
             {
                 if (cubes[x, y] == null)
                 {
@@ -440,7 +275,7 @@ public class Board : MonoBehaviour
 
     private IEnumerator DelayReconfirm()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1f);
         onReconfirmEvent?.Invoke();
     }
 

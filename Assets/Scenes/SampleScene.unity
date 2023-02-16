@@ -250,6 +250,7 @@ MonoBehaviour:
   cubePf: {fileID: 808576557770986111, guid: 4d5b0e68720e1aa46bce8bc1c7c95105, type: 3}
   holePf: {fileID: 808576557770986111, guid: 28297c3e9278b0646b9ef18722c2fd05, type: 3}
   emptyPf: {fileID: 808576557770986111, guid: 88d1617770a8d20479a2d55cc6a3ccf5, type: 3}
+  emptyCount: 2
   backgroundPf: {fileID: 808576557770986111, guid: f708817683677164ea1265a2dafb6cd1, type: 3}
   spawnerPf: {fileID: 808576557770986111, guid: bb47c75bb436aa94fad0934355fd567f, type: 3}
   cubeColors:

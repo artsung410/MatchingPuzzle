@@ -36,7 +36,14 @@ public class PuzzleMatcher : MonoBehaviour
     {
         //Board.onSwapEvent += CheckPattern_3Row;
         Board.onSwapEvent += CheckPattern_3Col;
+        Board.onSwapEvent += CheckPattern_4Col;
+
+
+
         Board.onReconfirmEvent += CheckPattern_3Col;
+        Board.onReconfirmEvent += CheckPattern_4Col;
+
+
         //Board.onSwapEvent += CheckPattern_Square;
     }
 
@@ -86,15 +93,14 @@ public class PuzzleMatcher : MonoBehaviour
 
     private void CheckPattern_3Col()
     {
-        Debug.Log("스왑 이벤트");
         int checkCount = 3;
 
-        for (int x = 0; x < board.amountX; x++)
+        for (int x = 0; x < board.cubeCountX; x++)
         {
-            for (int y = 0; y < board.amountY; y++)
+            for (int y = 0; y < board.cubeCountY; y++)
             {
                 // y = 0 1 2 3
-                if (y > board.amountY - checkCount || board.cubes[x, y] == null || board.cubes[x, y + 1] == null || board.cubes[x, y + 2] == null)
+                if (y > board.cubeCountY - checkCount || board.cubes[x, y] == null || board.cubes[x, y + 1] == null || board.cubes[x, y + 2] == null)
                 {
                     continue;
                 }
@@ -113,13 +119,51 @@ public class PuzzleMatcher : MonoBehaviour
                     Destroy(secondCube.gameObject);
                     Destroy(thirdCube.gameObject);
 
-                    board.CheckCount();
                     board.ReFillCubeCol(x, checkCount);
                     return;
                 }
             }
         }
 
+        //CheckResult((int)Pattern.Col3);
+    }
+
+    private void CheckPattern_4Col()
+    {
+        int checkCount = 4;
+
+        for (int x = 0; x < board.cubeCountX; x++)
+        {
+            for (int y = 0; y < board.cubeCountY; y++)
+            {
+                // y = 0 1 2 3
+                if (y > board.cubeCountY - checkCount || board.cubes[x, y] == null || board.cubes[x, y + 1] == null || board.cubes[x, y + 2] == null || board.cubes[x, y + 3] == null)
+                {
+                    continue;
+                }
+
+                Cube firstCube = board.cubes[x, y].GetComponent<Cube>();
+                Cube secondCube = board.cubes[x, y + 1].GetComponent<Cube>();
+                Cube thirdCube = board.cubes[x, y + 2].GetComponent<Cube>();
+                Cube forthCube = board.cubes[x, y + 3].GetComponent<Cube>();
+
+                if (firstCube.Type == secondCube.Type && firstCube.Type == thirdCube.Type && firstCube.Type == forthCube.Type)
+                {
+                    board.cubes[x, y] = null;
+                    board.cubes[x, y + 1] = null;
+                    board.cubes[x, y + 2] = null;
+                    board.cubes[x, y + 3] = null;
+
+                    Destroy(firstCube.gameObject);
+                    Destroy(secondCube.gameObject);
+                    Destroy(thirdCube.gameObject);
+                    Destroy(forthCube.gameObject);
+
+                    board.ReFillCubeCol(x, checkCount);
+                    return;
+                }
+            }
+        }
 
         //CheckResult((int)Pattern.Col3);
     }
@@ -191,9 +235,10 @@ public class PuzzleMatcher : MonoBehaviour
 
     private void OnDisable()
     {
-        //Board.onSwapEvent -= CheckPattern_3Row;
         Board.onSwapEvent -= CheckPattern_3Col;
+        Board.onSwapEvent -= CheckPattern_4Col;
+
         Board.onReconfirmEvent -= CheckPattern_3Col;
-        //Board.onSwapEvent -= CheckPattern_Square;
+        Board.onReconfirmEvent -= CheckPattern_4Col;
     }
 }
