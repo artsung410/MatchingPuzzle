@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 8
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b638f103c3977ab418a4ca583fdb3a1b, type: 3}
+  m_Name: StagesDB
+  m_EditorClassIdentifier: 
+  Entities:
+  - C0: n
+    C1: h
+    C2: h
+    C3: h
+    C4: h
+    C5: h
+    C6: h
+    C7: h
+    C8: n
+  - C0: h
+    C1: r
+    C2: p
+    C3: r
+    C4: p
+    C5: r
+    C6: y
+    C7: y
+    C8: h
+  - C0: h
+    C1: y
+    C2: p
+    C3: g
+    C4: y
+    C5: g
+    C6: r
+    C7: p
+    C8: h
+  - C0: h
+    C1: p
+    C2: g
+    C3: r
+    C4: r
+    C5: y
+    C6: p
+    C7: y
+    C8: h
+  - C0: h
+    C1: y
+    C2: y
+    C3: r
+    C4: g
+    C5: r
+    C6: y
+    C7: g
+    C8: h
+  - C0: h
+    C1: p
+    C2: g
+    C3: g
+    C4: y
+    C5: g
+    C6: g
+    C7: p
+    C8: h
+  - C0: h
+    C1: g
+    C2: y
+    C3: p
+    C4: g
+    C5: y
+    C6: g
+    C7: y
+    C8: h
+  - C0: h
+    C1: g
+    C2: g
+    C3: p
+    C4: r
+    C5: p
+    C6: y
+    C7: y
+    C8: h
+  - C0: n
+    C1: h
+    C2: h
+    C3: h
+    C4: h
+    C5: h
+    C6: h
+    C7: h
+    C8: n

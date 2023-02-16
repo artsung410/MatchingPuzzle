@@ -16,11 +16,31 @@ public class Board : MonoBehaviour
     public int IntervalX;
     public int IntervalY;
 
-    public GameObject cubePf;   // 타일 프리팹
-    public GameObject backgroundPf;  // 투명한 프리팹 (좌표용)
-    public GameObject spawnerPf; // 스포너 프리팹
+    [SerializeField]
+    private StagesDB stagesDB;       // 엑셀 시트
 
-    public Color[] cubeColors; // 타일의 색상 종류
+    [SerializeField]
+    private Transform InitSpawnPoint;
+
+    [SerializeField]
+    private GameObject cubePf;   // 타일 프리팹
+
+    [SerializeField]
+    private GameObject holePf;   // 홀 프리팹
+
+    [SerializeField]
+    private GameObject emptyPf;   // 빈구멍 프리팹
+
+    [SerializeField]
+    private GameObject backgroundPf;  // 투명한 프리팹 (좌표용)
+
+    [SerializeField]
+    private GameObject spawnerPf; // 스포너 프리팹
+
+    [SerializeField]
+    private Color[] cubeColors; // 타일의 색상 종류
+
+    public string[,] cubeInitials;  // 큐브 이니셜 저장  
     public GameObject[,] cubes; // 모든 타일을 2차원 배열에 넣기
     public GameObject[] spawners;  // 새로운 스포너 1처원 배열에 넣기
     public Background[,] backgrounds; // 좌표 전용객체 2차원 배열에 넣기
@@ -36,10 +56,35 @@ public class Board : MonoBehaviour
 
     void Start()
     {
+        int cellCount = stagesDB.Entities.Count;
         cubes = new GameObject[amountX, amountY];
         spawners = new GameObject[amountX];
         backgrounds = new Background[amountX, amountY];
+        cubeInitials = new string[amountX, amountY];
+
+        for (int y = 0; y < cellCount; y++)
+        {
+            cubeInitials[0, y] = stagesDB.Entities[y].C0;
+            cubeInitials[1, y] = stagesDB.Entities[y].C1;
+            cubeInitials[2, y] = stagesDB.Entities[y].C2;
+            cubeInitials[3, y] = stagesDB.Entities[y].C3;
+            cubeInitials[4, y] = stagesDB.Entities[y].C4;
+            cubeInitials[5, y] = stagesDB.Entities[y].C5;
+            cubeInitials[6, y] = stagesDB.Entities[y].C6;
+            cubeInitials[7, y] = stagesDB.Entities[y].C7;
+            cubeInitials[8, y] = stagesDB.Entities[y].C8;
+        }
+
+        for (int x = 0; x < amountX; x++)
+        {
+            for (int y = 0; y < amountY; y++)
+            {
+                Debug.Log(cubeInitials[x, y]);
+            }
+        }
+
         Init();
+
     }
 
     // 퍼즐 생성
@@ -51,41 +96,64 @@ public class Board : MonoBehaviour
         {
             for (int y = 0; y < amountY; y++)
             {
-                Vector2 newPos = new Vector2(InitPosX + x * IntervalX, InitPosY + y * IntervalY);
+                Vector2 newPos = new Vector2(InitSpawnPoint.position.x + x * IntervalX, InitSpawnPoint.position.y - y * IntervalY);
                 //int ColorIndex = Random.Range(0, cubeColors.Length);   // 색깔을 랜덤으로 뽑기
 
-                GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
-                GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
-                coordObj.transform.parent = transform;
-
-                Cube cube = cubeObj.GetComponent<Cube>();
-                Background coord = coordObj.GetComponent<Background>();
-
-                if (y == 2 || y == 5)
+                if (cubeInitials[x, y] == "r" || cubeInitials[x, y] == "y" || cubeInitials[x, y] == "g" || cubeInitials[x, y] == "p")
                 {
-                    cube.GetComponent<Image>().color = cubeColors[1];
-                    cube.Type = 1;
+                    GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
+                    GameObject coordObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
+                    coordObj.transform.parent = transform;
+
+                    Cube cube = cubeObj.GetComponent<Cube>();
+                    Background coord = coordObj.GetComponent<Background>();
+
+                    cube.InitCoord(x, y);
+                    cube.gameObject.name = $"({x}, {y})";
+                    cubeObj.transform.parent = transform;
+                    cubes[x, y] = cubeObj;
+
+                    coord.InitCoord(x, y);
+                    backgrounds[x, y] = coord;
+
+                    switch (cubeInitials[x, y])
+                    {
+                        case "g":
+                            cube.GetComponent<Image>().color = cubeColors[0];
+                            cube.Type = 0;
+                            break;
+                        case "p":
+                            cube.GetComponent<Image>().color = cubeColors[1];
+                            cube.Type = 1;
+                            break;
+                        case "r":
+                            cube.GetComponent<Image>().color = cubeColors[2];
+                            cube.Type = 2;
+                            break;
+                        case "y":
+                            cube.GetComponent<Image>().color = cubeColors[3];
+                            cube.Type = 3;
+                            break;
+                    }
+                }
+                else if (cubeInitials[x, y] == "h")
+                {
+                    GameObject hole = Instantiate(holePf, newPos, Quaternion.identity);
+                    hole.transform.parent = transform;
+
+                    // 구멍 부분에 스포너 설치
+                    if (y == 0)
+                    {
+                        GameObject spawner = Instantiate(spawnerPf, newPos, Quaternion.identity);
+                        spawner.transform.parent = transform;
+                        spawners[x] = spawner;
+                    }
+
                 }
                 else
                 {
-                    cube.GetComponent<Image>().color = cubeColors[0];
-                    cube.Type = 0;
-                }
-
-                cube.InitCoord(x, y);
-                cube.gameObject.name = $"({x}, {y})";
-                cubeObj.transform.parent = transform;
-                cubes[x, y] = cubeObj;
-
-                coord.InitCoord(x, y);
-                backgrounds[x, y] = coord;
-
-                // 맨 위에 스포너 설치
-                if (y == (amountY - 1))
-                {
-                    Vector2 spawnerPos = new Vector2(newPos.x, newPos.y + IntervalY);
-                    GameObject spawner = Instantiate(spawnerPf, spawnerPos, Quaternion.identity);
-                    spawners[x] = spawner;
+                    GameObject empty = Instantiate(emptyPf, newPos, Quaternion.identity);
+                    empty.transform.parent = transform;
                 }
             }
         }
