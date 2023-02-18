@@ -46,9 +46,10 @@ public class Board : MonoBehaviour
 
     [SerializeField]
     private Color[] cubeColors; // 타일의 색상 종류
-
+                                
+    public bool[,] marker; // null값으로 만들기 위한 마커보드 생성
     public string[,] cubeInitials;  // 큐브 이니셜 저장  
-    public GameObject[,] cubes; // 모든 타일을 2차원 배열에 넣기
+    public Cube[,] cubes; // 모든 타일을 2차원 배열에 넣기
     public GameObject[] spawners;  // 새로운 스포너 1처원 배열에 넣기
     public Background[,] backgrounds; // 좌표 전용객체 2차원 배열에 넣기
 
@@ -61,17 +62,19 @@ public class Board : MonoBehaviour
         puzzleMatcher = GetComponent<PuzzleMatcher>();
     }
 
-
+    private int[] nullCounts;
     void Start()
     {
         cubeCountX = amountX - emptyCount;
         cubeCountY = amountY - emptyCount;
 
         int cellCount = stagesDB.Entities.Count;
-        cubes = new GameObject[amountX - emptyCount, amountY - emptyCount];
-        spawners = new GameObject[amountX - emptyCount];
-        backgrounds = new Background[amountX - emptyCount, amountY - emptyCount];
+        cubes = new Cube[cubeCountX, cubeCountY];
+        spawners = new GameObject[cubeCountX];
+        backgrounds = new Background[cubeCountX, cubeCountY];
         cubeInitials = new string[amountX, amountY];
+        marker = new bool[cubeCountX, cubeCountY];
+        nullCounts = new int[cubeCountX];
 
         for (int y = 0; y < cellCount; y++)
         {
@@ -84,14 +87,6 @@ public class Board : MonoBehaviour
             cubeInitials[6, y] = stagesDB.Entities[y].C6;
             cubeInitials[7, y] = stagesDB.Entities[y].C7;
             cubeInitials[8, y] = stagesDB.Entities[y].C8;
-        }
-
-        for (int x = 0; x < amountX; x++)
-        {
-            for (int y = 0; y < amountY; y++)
-            {
-                Debug.Log(cubeInitials[x, y]);
-            }
         }
 
         Init();
@@ -122,7 +117,7 @@ public class Board : MonoBehaviour
                     cube.InitCoord(x - 1 , y - 1);
                     cube.gameObject.name = $"({x - 1}, {y - 1})";
                     cubeObj.transform.parent = transform;
-                    cubes[x - 1, y - 1] = cubeObj;
+                    cubes[x - 1, y - 1] = cube;
 
                     background.InitCoord(x - 1, y - 1);
                     backgrounds[x - 1, y - 1] = background;
@@ -168,106 +163,130 @@ public class Board : MonoBehaviour
                 }
             }
         }
-    }
-    #endregion
 
-    #region NullCount
-    public void CheckCount()
+        InitMarker();
+    }
+
+
+
+    private void InitMarker()
     {
         for (int x = 0; x < cubeCountX; x++)
         {
             for (int y = 0; y < cubeCountY; y++)
             {
-                Debug.Log(cubes[x, y]);
+                marker[x, y] = false;
             }
         }
     }
+
     #endregion
 
-    #region ReFill
+    #region Arrangement
 
-    public Queue<Background> NewFillCubeColQueue = new Queue<Background>();       // 큐브를 정리한 후 생긴 빈공간의 좌표를 담을 큐
-
-    // 빈공간을 정렬하는 메서드
-    public void ReFillCubeCol(int col, int nullCount)
+    public void ArrangeCubes()
     {
-        // 빈공간을 체크하는 logic (첫번째 null 만 체크한다)
-        for (int x = 0; x < cubeCountX; x++)
-        {
-            // 역순(바닥부터)으로 체크한다.
-            for (int y = cubeCountY - nullCount; y >= 0; y--)
-            {
-                if (x == col)
-                {
-                    // 최상단부터 널일때 리턴시켜준다.
-                    if (cubes[x, y] == null && y == 0)
-                    {
-                        return;
-                    }
-
-                    // 중앙에 널이 있을때
-                    else if (cubes[x, y] != null)
-                    {
-                        // 좌표를 널카운트만큼 곱해서 이동시켜준다.
-                        Vector2 changePos = new Vector2(cubes[x, y].transform.position.x, cubes[x, y].transform.position.y - nullCount * IntervalY);
-                        cubes[x, y].GetComponent<Cube>().SetPosition(changePos);
-
-                        // 클래스의 필드값을 리셋해준다.
-                        cubes[x, y].GetComponent<Cube>().InitCoord(x, y + nullCount);
-
-                        // 2차원 배열상의 원소를 스왑해준다.
-                        cubes[x, y + nullCount] = cubes[x, y];
-
-                        // 최상단 3칸을 null로 만들어준다.
-                        if (y < nullCount)
-                        {
-                            cubes[x, y] = null;
-                        }
-                    }
-                }
-            }
-        }
-
-        NewFillCubeCol(col);
-        CheckCount();
+        destructionAndSaaveCubes();
+        fillEmpty();
+        InitMarker();
     }
 
-    // 새로운 큐브를 생성하는 메서드
-    public void NewFillCubeCol(int col)
-    {
-        int nullCount = 0;
+    //빈공간으로 인해 움직이는 큐브들을 스택에 저장한다.
+    Stack<Cube> saveCubes = new Stack<Cube>(); 
 
+    private void destructionAndSaaveCubes()
+    {
         for (int x = 0; x < cubeCountX; x++)
         {
+            nullCounts[x] = 0;
             for (int y = 0; y < cubeCountY; y++)
             {
-                if (cubes[x, y] == null)
+                if(true == marker[x, y])
                 {
-                    ++nullCount;
-                    NewFillCubeColQueue.Enqueue(backgrounds[x, y]);
+                    // 마킹된 큐브들을 제거시킨다.
+                    Destroy(cubes[x, y].gameObject);
+
+                    // 열마다 널값을 더해준다.
+                    ++nullCounts[x];
+
+                    // 제거된 오브젝트 좌표를 null로 만든다.
+                    cubes[x, y] = null;  
+                }
+                else
+                {
+                    // null을 제외한 좌표상 모든 큐브들을 담는다. (마킹된 열만 체크)
+                    saveCubes.Push(cubes[x, y]);
                 }
             }
         }
+    }
 
-        StartCoroutine(DelaySpawn(col, nullCount));
+    private void fillEmpty()
+    {
+        for (int x = cubeCountX - 1; x >= 0; x--)
+        {
+            for (int y = cubeCountY - 1; y >= cubeCountY - nullCounts.Length; y--)
+            {
+                // 저장했던 큐브를 꺼낸다.
+                Cube cube = saveCubes?.Pop();
+                
+                // 스택이 비어있으면, 정렬된 좌표를 제외한 곳을 모두 null로 만든다.
+                if (saveCubes.Count == 0)
+                {
+                    createCubes();
+                    return;
+                }
+
+                // 좌표를 담아둔다.
+                int posX = cube.X;
+                // 꺼내봤는데 현재 x좌표와 맞지않는다면 다시 넣어준다.
+                if (cube.X != x)
+                {
+                    saveCubes.Push(cube); 
+                    break;
+                }
+
+                // 꺼낸큐브를 바닥부터 배치한다. (역순으로)
+                cube.SetPosition(backgrounds[posX, y].transform.position);
+
+                // 배열을 다시 세팅한다.
+                cubes[posX, y] = cube;
+
+                // 큐브의 정보도 업데이트해준다.
+                cube.InitCoord(posX, y);
+            }
+        }
     }
 
     // 새로운 큐브를 생성하는 코루틴
-    private IEnumerator DelaySpawn(int col, int nullCount)
+    private void createCubes()
     {
-        for (int i = 0; i < nullCount; i++)
+        for (int x = 0; x < cubeCountX; x++)
         {
-            yield return new WaitForSeconds(0.1f);                                                              // 겹치지 않게 딜레이를 줌.
-            int ColorIndex = UnityEngine.Random.Range(0, cubeColors.Length);                                    // 색깔을 랜덤으로 뽑기
-            GameObject cubeObj = Instantiate(cubePf, spawners[col].transform.position, Quaternion.identity);    // 새로운 큐브 생성
-            cubeObj.transform.parent = transform;                                                               // 오브젝트 부모 지정
+            if (nullCounts[x] == 0)
+            {
+                continue;
+            }
 
-            Cube cube = cubeObj.GetComponent<Cube>();
-            Background background = NewFillCubeColQueue.Dequeue();
-            cube.SetPosition(background.transform.position);                                                    // 새롭게 생긴 빈공간으로 큐브 넣기
-            cube.InitCoord(col, background.Y);                                                                  // 백그라운드 필드좌표와 동일한 좌표 설정
-            cubes[col, background.Y] = cubeObj;                                                                 // 백그라운드 필드좌표와 동일한 좌표 설정
-            cube.SetColor(cubeColors[ColorIndex], ColorIndex);                                                  // 색깔 바꿔주기
+            for (int y = nullCounts[x] - 1; y >= 0; y--)
+            {
+                // 원래있던 좌표를 널로 만들어준다.
+                cubes[x, y] = null;
+
+                                                                                                                    // 겹치지 않게 딜레이를 줌.
+                int ColorIndex = UnityEngine.Random.Range(0, cubeColors.Length);                                    // 색깔을 랜덤으로 뽑기
+                GameObject cubeObj = Instantiate(cubePf, spawners[x].transform.position, Quaternion.identity);      // 새로운 큐브 생성
+                cubeObj.transform.parent = transform;                                                               // 오브젝트 부모 지정
+
+                Cube cube = cubeObj.GetComponent<Cube>();
+                cube.SetPosition(backgrounds[x, y].transform.position);                                             // 빈공간으로 큐브 배치
+                cube.InitCoord(x, y);                                                                               // 백그라운드 필드좌표와 동일한 좌표 설정
+
+                cube.SetColor(cubeColors[ColorIndex], ColorIndex);                                                  // 색깔 바꿔주기
+
+                // 새로운 큐브를 할당한다.
+                cubes[x, y] = cube;                                                              
+            }
         }
 
         StartCoroutine(DelayReconfirm());
@@ -275,8 +294,8 @@ public class Board : MonoBehaviour
 
     private IEnumerator DelayReconfirm()
     {
-        yield return new WaitForSeconds(1f);
-        onReconfirmEvent?.Invoke();
+        yield return new WaitForSeconds(1.5f);
+        puzzleMatcher.CheckAllPattern();
     }
 
     #endregion
@@ -284,7 +303,7 @@ public class Board : MonoBehaviour
     #region Swap
     public void SwapObj(Cube firstCube, Cube SecondCube)
     {
-        GameObject tempCube = cubes[firstCube.X, firstCube.Y];
+        Cube tempCube = cubes[firstCube.X, firstCube.Y];
         cubes[firstCube.X, firstCube.Y] = cubes[SecondCube.X, SecondCube.Y];
         cubes[SecondCube.X, SecondCube.Y] = tempCube;
 
