@@ -5,23 +5,34 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class Candy : MonoBehaviour, IPointerClickHandler
+public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
 {
+    [HideInInspector]
     public int X;              // 2차 배열의 x축 인덱스
+
+    [HideInInspector]
     public int Y;              // 2차 배열의 y축 인덱스
+
+    [HideInInspector]
     public int Type;           // 큐브 종류
-    private Board board;        // 부모 클래스
+
+    [HideInInspector]
+    public Board board;        // 부모 클래스
 
     [SerializeField]
     private Image image;
 
+    [HideInInspector]
     public bool onGround = false;
+
+    public Candy targetCandy;
 
     private void Start()
     {
         board = GetComponentInParent<Board>();
     }
 
+    #region SetInfo
     public void InitCoord(int x, int y)
     {
         X = x;
@@ -32,37 +43,6 @@ public class Candy : MonoBehaviour, IPointerClickHandler
     {
         image.color = color;
         Type = type;
-    }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        if (false == board.OnMoveAble)
-        {
-            return;
-        }
-
-        // 첫번째 타일을 클릭했을 때
-        if (false == board.IsPickCandy)
-        {
-            board.currnetPickCandy = this;                                 // 처음 타일을 클릭했을 때
-            board.IsPickCandy = true;
-        }
-
-        // 두번째 타일을 클릭했을 때
-        else
-        {
-            Candy firstCandy = board.currnetPickCandy.GetComponent<Candy>();        // 타겟 타일 할당
-
-            if ((Mathf.Abs(firstCandy.X - X) == 1 && Mathf.Abs(firstCandy.Y - Y) == 0) ||
-                 (Mathf.Abs(firstCandy.X - X) == 0 && Mathf.Abs(firstCandy.Y - Y) == 1))
-            {
-                board.SwapObj(firstCandy, this);
-                board.SwapPos(ref firstCandy.X, ref firstCandy.Y, ref X, ref Y);
-                Board.onSwapEvent?.Invoke();
-            }
-
-            board.IsPickCandy = false;       // 바뀐상태이므로 타일을 쥐고있는 상태가 아니다.
-        }
     }
 
     public void SetPosition(Vector2 targetPos)
@@ -83,4 +63,69 @@ public class Candy : MonoBehaviour, IPointerClickHandler
 
         onGround = true;
     }
+    #endregion
+
+    #region drag
+    protected Vector2 dragBeginPos;
+    protected Vector2 dragEndPos;
+    protected Vector2 moveDir;
+    protected Vector2 MousePos;
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        dragBeginPos = calculateMousePostion();
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+    }
+
+    public virtual void OnEndDrag(PointerEventData eventData)
+    {
+        dragEndPos = calculateMousePostion();
+        moveDir = calculateDir();
+    }
+
+
+    protected Vector2 calculateMousePostion()
+    {
+        MousePos = Input.mousePosition;
+        MousePos = Camera.main.ScreenToWorldPoint(MousePos);
+        return MousePos;
+    }
+
+    protected Vector2 calculateDir()
+    {
+        float distanceX = dragEndPos.x - dragBeginPos.x;
+        float distanceY = dragEndPos.y - dragBeginPos.y;
+
+        float angle = Mathf.Atan2(distanceY, distanceX) * Mathf.Rad2Deg;
+
+        Debug.Log(angle);
+        if (angle > 45 && angle < 135)
+        {
+            targetCandy = Y - 1 >= 0 ? board.candies[X, Y - 1] : null;
+            return Vector2.up;
+        }
+        else if (angle > -135 && angle < -45)
+        {
+            targetCandy = Y + 1 < board.candyCountY ? board.candies[X, Y + 1] : null;
+            return Vector2.down;
+        }
+        else if (angle > -45 && angle < 45)
+        {
+            targetCandy = X + 1 < board.candyCountX ? board.candies[X + 1, Y] : null;
+            return Vector2.right;
+        }
+        else
+        {
+            targetCandy = X - 1 >=0 ? board.candies[X - 1, Y] : null;
+            return Vector2.left;
+        }
+    }
+
+    #endregion
+
+
+
 }

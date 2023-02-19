@@ -6,8 +6,6 @@ using System;
 
 public class Board : MonoBehaviour
 {
-    public static Action onSwapEvent;
-
     public int amountX; // 가로 수량
     public int amountY; // 세로 수량
 
@@ -195,7 +193,9 @@ public class Board : MonoBehaviour
     }
 
     //빈공간으로 인해 움직이는 큐브들을 스택에 저장한다.
-    Stack<Candy> savedCandies = new Stack<Candy>(); 
+    Stack<Candy> savedCandies = new Stack<Candy>();
+    
+
 
     private void destructionCandies()
     {
@@ -213,7 +213,10 @@ public class Board : MonoBehaviour
                     ++nullCounts[x];
 
                     // 제거된 오브젝트 좌표를 null로 만든다.
-                    candies[x, y] = null;  
+                    candies[x, y] = null;
+
+                    int score = GameManager.Instance.blockDestructionScore;
+                    GameManager.Instance.SetScore(score);
                 }
                 else
                 {
@@ -261,7 +264,7 @@ public class Board : MonoBehaviour
     }
 
     // 새로운 큐브를 생성하는 코루틴
-    private void createCandy()
+    public void createCandy()
     {
         StartCoroutine(spawnCandy());
     }
@@ -374,12 +377,12 @@ public class Board : MonoBehaviour
         candies[x, y] = null;
 
         GameObject newObj = Instantiate(ballPf, backgrounds[x, y].transform.position, Quaternion.identity);
-        Ball ball = newObj.GetComponent<Ball>();
-        ball.transform.SetParent(transform);
+        Candy cnady = newObj.GetComponent<Candy>();
+        cnady.transform.SetParent(transform);
 
-        ball.InitCoord(x, y);
-        ball.SetColor(Color.white, 7);
-        candies[x, y] = ball;
+        cnady.InitCoord(x, y);
+        cnady.SetColor(Color.white, 7);
+        candies[x, y] = cnady;
     }
 
     private void Update()

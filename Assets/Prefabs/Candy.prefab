@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 808576557770986110}
   - component: {fileID: 808576557770986096}
   - component: {fileID: 808576557770986097}
-  - component: {fileID: 8908997062415824665}
   - component: {fileID: 6208968227739070298}
+  - component: {fileID: 3689927450000926654}
   m_Layer: 6
   m_Name: Candy
   m_TagString: Untagged
@@ -78,23 +78,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8908997062415824665
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 808576557770986111}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4df8a28dc41578c42b2e8bdd86e42c7b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  X: 0
-  Y: 0
-  Type: 0
-  image: {fileID: 808576557770986097}
-  onGround: 0
 --- !u!61 &6208968227739070298
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -121,3 +104,22 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 25, y: 25}
   m_EdgeRadius: 0
+--- !u!114 &3689927450000926654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 808576557770986111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5167ef6f04315e54788ef26638397776, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  X: 0
+  Y: 0
+  Type: 0
+  board: {fileID: 0}
+  image: {fileID: 808576557770986097}
+  onGround: 0
+  targetCandy: {fileID: 0}

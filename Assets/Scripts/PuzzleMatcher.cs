@@ -19,7 +19,7 @@ public class PuzzleMatcher : MonoBehaviour
 
     private void OnEnable()
     {
-        Board.onSwapEvent += CheckAllPattern;
+        GameManager.Instance.onSwapEvent += CheckAllPattern;
     }
 
     public void CheckAllPattern()
@@ -33,11 +33,23 @@ public class PuzzleMatcher : MonoBehaviour
         if (false == onPattern)
         {
             board.OnMoveAble = true;
+
+            if(GameManager.Instance.MunchkinCount == 0)
+            {
+                board.OnMoveAble = false;
+                StartCoroutine(DelayGameClear());
+            }
             return;
         }
 
         board.ArrangeCandies();
     }
+
+    private IEnumerator DelayGameClear()
+    {
+        yield return new WaitForSeconds(1f);
+        GameManager.Instance.ActivationClearPanel();
+    }    
 
     public void CheckPatternRow()
     {
@@ -134,6 +146,6 @@ public class PuzzleMatcher : MonoBehaviour
 
     private void OnDisable()
     {
-        Board.onSwapEvent -= CheckAllPattern;
+        GameManager.Instance.onSwapEvent -= CheckAllPattern;
     }
 }
