@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class Cube : MonoBehaviour, IPointerClickHandler
+public class Candy : MonoBehaviour, IPointerClickHandler
 {
     public int X;              // 2차 배열의 x축 인덱스
     public int Y;              // 2차 배열의 y축 인덱스
@@ -14,6 +14,8 @@ public class Cube : MonoBehaviour, IPointerClickHandler
 
     [SerializeField]
     private Image image;
+
+    public bool onGround = false;
 
     private void Start()
     {
@@ -34,34 +36,38 @@ public class Cube : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        // 첫번째 타일을 클릭했을 때
-        if (false == board.IsPickCube)
+        if (false == board.OnMoveAble)
         {
-            board.currnetPickCube = gameObject;                                 // 처음 타일을 클릭했을 때
-            board.IsPickCube = true;
+            return;
+        }
+
+        // 첫번째 타일을 클릭했을 때
+        if (false == board.IsPickCandy)
+        {
+            board.currnetPickCandy = this;                                 // 처음 타일을 클릭했을 때
+            board.IsPickCandy = true;
         }
 
         // 두번째 타일을 클릭했을 때
         else
         {
-            Cube firstCube = board.currnetPickCube.GetComponent<Cube>();        // 타겟 타일 할당
+            Candy firstCandy = board.currnetPickCandy.GetComponent<Candy>();        // 타겟 타일 할당
 
-            if ((Mathf.Abs(firstCube.X - X) == 1 && Mathf.Abs(firstCube.Y - Y) == 0) ||
-                 (Mathf.Abs(firstCube.X - X) == 0 && Mathf.Abs(firstCube.Y - Y) == 1))
+            if ((Mathf.Abs(firstCandy.X - X) == 1 && Mathf.Abs(firstCandy.Y - Y) == 0) ||
+                 (Mathf.Abs(firstCandy.X - X) == 0 && Mathf.Abs(firstCandy.Y - Y) == 1))
             {
-                board.SwapObj(firstCube, this);
-                board.SwapPos(ref firstCube.X, ref firstCube.Y, ref X, ref Y);
-
+                board.SwapObj(firstCandy, this);
+                board.SwapPos(ref firstCandy.X, ref firstCandy.Y, ref X, ref Y);
                 Board.onSwapEvent?.Invoke();
             }
 
-
-            board.IsPickCube = false;       // 바뀐상태이므로 타일을 쥐고있는 상태가 아니다.
+            board.IsPickCandy = false;       // 바뀐상태이므로 타일을 쥐고있는 상태가 아니다.
         }
     }
 
     public void SetPosition(Vector2 targetPos)
     {
+        onGround = false;
         StartCoroutine(SetPositioning(targetPos));
     }
 
@@ -75,5 +81,6 @@ public class Cube : MonoBehaviour, IPointerClickHandler
             transform.position = new Vector2(transform.position.x, transform.position.y - (distance / 20));
         }
 
+        onGround = true;
     }
 }

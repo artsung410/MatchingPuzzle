@@ -241,26 +241,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   amountX: 9
   amountY: 9
+  candyCountX: 0
+  candyCountY: 0
   InitPosX: 35
   InitPosY: 400
   IntervalX: 30
   IntervalY: 30
   stagesDB: {fileID: 11400000, guid: a66d62eda1bbd8f4d98edab686c3e10b, type: 2}
   InitSpawnPoint: {fileID: 899341537}
-  cubePf: {fileID: 808576557770986111, guid: 4d5b0e68720e1aa46bce8bc1c7c95105, type: 3}
+  ballPf: {fileID: 808576557770986111, guid: 885e713ede67bc744bd89be8fe1929b3, type: 3}
+  candyPf: {fileID: 808576557770986111, guid: 4d5b0e68720e1aa46bce8bc1c7c95105, type: 3}
   holePf: {fileID: 808576557770986111, guid: 28297c3e9278b0646b9ef18722c2fd05, type: 3}
   emptyPf: {fileID: 808576557770986111, guid: 88d1617770a8d20479a2d55cc6a3ccf5, type: 3}
   emptyCount: 2
   backgroundPf: {fileID: 808576557770986111, guid: f708817683677164ea1265a2dafb6cd1, type: 3}
   spawnerPf: {fileID: 808576557770986111, guid: bb47c75bb436aa94fad0934355fd567f, type: 3}
-  cubeColors:
-  - {r: 0.12156863, g: 1, b: 0, a: 1}
-  - {r: 0.754717, g: 0.16019939, b: 0.6120635, a: 4.5443564e+30}
-  - {r: 0.7490196, g: 0.0071147634, b: 0, a: 1}
-  - {r: 1, g: 0.98025036, b: 0, a: 5}
+  candyColors:
+  - {r: 0.5182585, g: 0.8867924, b: 0.49693838, a: 1}
+  - {r: 0.8396226, g: 0.5101103, b: 0.80230826, a: 1}
+  - {r: 0.9339623, g: 0.3647739, b: 0.3647739, a: 1}
+  - {r: 0.9339623, g: 0.88379425, b: 0.4264507, a: 1}
   spawners: []
-  IsPickCube: 0
-  currnetPickCube: {fileID: 0}
+  IsPickCandy: 0
+  currnetPickCandy: {fileID: 0}
   puzzleMatcher: {fileID: 0}
 --- !u!114 &195178968
 MonoBehaviour:

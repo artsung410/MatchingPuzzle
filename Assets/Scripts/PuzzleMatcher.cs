@@ -28,31 +28,33 @@ public class PuzzleMatcher : MonoBehaviour
 
         CheckPatternRow();
         CheckPatternColumn();
+        CheckPattern_Square();
 
         if (false == onPattern)
         {
+            board.OnMoveAble = true;
             return;
         }
 
-        board.ArrangeCubes();
+        board.ArrangeCandies();
     }
 
     public void CheckPatternRow()
     {
         int checkCount = 3;
 
-        for (int x = 0; x < board.cubeCountX; x++)
+        for (int x = 0; x < board.candyCountX; x++)
         {
-            for (int y = 0; y < board.cubeCountY; y++)
+            for (int y = 0; y < board.candyCountY; y++)
             {
-                if (x > board.cubeCountX - checkCount || board.cubes[x, y] == null || board.cubes[x + 1, y] == null || board.cubes[x + 2, y] == null)
+                if (x > board.candyCountX - checkCount)
                 {
                     continue;
                 }
 
-                Cube firstCube = board.cubes[x, y].GetComponent<Cube>();
-                Cube secondCube = board.cubes[x + 1, y].GetComponent<Cube>();
-                Cube thirdCube = board.cubes[x + 2, y].GetComponent<Cube>();
+                Candy firstCube = board.candies[x, y];
+                Candy secondCube = board.candies[x + 1, y];
+                Candy thirdCube = board.candies[x + 2, y];
 
                 if (firstCube.Type == secondCube.Type && firstCube.Type == thirdCube.Type)
                 {
@@ -70,18 +72,18 @@ public class PuzzleMatcher : MonoBehaviour
     {
         int checkCount = 3;
 
-        for (int x = 0; x < board.cubeCountX; x++)
+        for (int x = 0; x < board.candyCountX; x++)
         {
-            for (int y = 0; y < board.cubeCountY; y++)
+            for (int y = 0; y < board.candyCountY; y++)
             {
-                if (y > board.cubeCountY - checkCount || board.cubes[x, y] == null || board.cubes[x, y + 1] == null || board.cubes[x, y + 2] == null)
+                if (y > board.candyCountY - checkCount)
                 {
                     continue;
                 }
 
-                Cube firstCube = board.cubes[x, y].GetComponent<Cube>();
-                Cube secondCube = board.cubes[x, y + 1].GetComponent<Cube>();
-                Cube thirdCube = board.cubes[x, y + 2].GetComponent<Cube>();
+                Candy firstCube = board.candies[x, y];
+                Candy secondCube = board.candies[x, y + 1];
+                Candy thirdCube = board.candies[x, y + 2];
 
                 if (firstCube.Type == secondCube.Type && firstCube.Type == thirdCube.Type)
                 {
@@ -94,70 +96,41 @@ public class PuzzleMatcher : MonoBehaviour
         }
     }
 
-    //public void CheckPattern_Square()
-    //{
-    //    int checkCount = 2;
+    public void CheckPattern_Square()
+    {
+        int checkCount = 2;
 
-    //    for (int x = 0; x < board.amountX; x++)
-    //    {
-    //        for (int y = 0; y < board.amountY; y++)
-    //        {
-    //            // y = 0 1 2 3
-    //            if (x > board.amountX - checkCount)
-    //            {
-    //                continue;
-    //            }
+        for (int x = 0; x < board.candyCountX; x++)
+        {
+            for (int y = 0; y < board.candyCountY; y++)
+            {
+                // y = 0 1 2 3
+                if (x > board.candyCountX - checkCount)
+                {
+                    continue;
+                }
 
-    //            if (y > board.amountY - checkCount)
-    //            {
-    //                continue;
-    //            }
+                if (y > board.candyCountY - checkCount)
+                {
+                    continue;
+                }
 
-    //            Cube firstCube = board.cubes[x, y].GetComponent<Cube>();
-    //            Cube secondCube = board.cubes[x + 1, y].GetComponent<Cube>();
-    //            Cube thirdCube = board.cubes[x, y + 1].GetComponent<Cube>();
-    //            Cube fourthCube = board.cubes[x + 1, y + 1].GetComponent<Cube>();
+                Candy firstCube = board.candies[x, y];
+                Candy secondCube = board.candies[x + 1, y];
+                Candy thirdCube = board.candies[x, y + 1];
+                Candy fourthCube = board.candies[x + 1, y + 1];
 
-    //            if (firstCube.type == secondCube.type && firstCube.type == thirdCube.type && firstCube.type == fourthCube.type)
-    //            {
-    //                cubes.Add(firstCube);
-    //                cubes.Add(secondCube);
-    //                cubes.Add(thirdCube);
-    //                cubes.Add(fourthCube);
-    //            }
-    //        }
-    //    }
-
-    //    CheckResult((int)Pattern.Square);
-    //}
-
-    //private void CheckResult(int index)
-    //{
-    //    cubeChecks[index] = true;
-
-    //    int checkCount = 0;
-
-    //    for (int i = 0; i < cubeChecks.Length; i++)
-    //    {
-    //        if (cubeChecks[i] == true)
-    //        {
-    //            ++checkCount;
-    //        }
-    //    }
-
-    //    if (checkCount == cubeChecks.Length)
-    //    {
-    //        //DeletPuzzle();
-    //    }
-    //}
-
-    //public void DeletPuzzle()
-    //{
-    //    for (int i = 0; i < cubes.Count; i++)
-    //    {
-    //        Destroy(cubes[i].gameObject);
-    //    }
-    //}
+                if (firstCube.Type == secondCube.Type && firstCube.Type == thirdCube.Type && firstCube.Type == fourthCube.Type)
+                {
+                    onPattern = true;
+                    board.marker[x, y] = true;
+                    board.marker[x + 1, y] = true;
+                    board.marker[x, y + 1] = true;
+                    board.CreateBall(x + 1, y + 1);
+                }
+            }
+        }
+    }
 
     private void OnDisable()
     {

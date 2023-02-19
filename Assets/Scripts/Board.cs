@@ -7,13 +7,12 @@ using System;
 public class Board : MonoBehaviour
 {
     public static Action onSwapEvent;
-    public static Action onReconfirmEvent;
 
     public int amountX; // 가로 수량
     public int amountY; // 세로 수량
 
-    public int cubeCountX = 0;
-    public int cubeCountY = 0;
+    public int candyCountX = 0;
+    public int candyCountY = 0;
 
     public int InitPosX;
     public int InitPosY;
@@ -21,41 +20,53 @@ public class Board : MonoBehaviour
     public int IntervalY;
 
     [SerializeField]
-    private StagesDB stagesDB;       // 엑셀 시트
+    private StagesDB stagesDB;                  // 엑셀 시트
 
     [SerializeField]
     private Transform InitSpawnPoint;
 
     [SerializeField]
-    private GameObject cubePf;   // 타일 프리팹
+    private GameObject ballPf;                  // 볼 프리팹
 
     [SerializeField]
-    private GameObject holePf;   // 홀 프리팹
+    private GameObject candyPf;                  // 타일 프리팹
 
     [SerializeField]
-    private GameObject emptyPf;   // 빈구멍 프리팹
+    private GameObject holePf;                  // 홀 프리팹
 
     [SerializeField]
-    private int emptyCount;   // 빈구멍 개수 (한 행)
+    private GameObject emptyPf;                 // 빈구멍 프리팹
 
     [SerializeField]
-    private GameObject backgroundPf;  // 투명한 프리팹 (좌표용)
+    private int emptyCount;                     // 빈구멍 개수 (한 행)
 
     [SerializeField]
-    private GameObject spawnerPf; // 스포너 프리팹
+    private GameObject backgroundPf;            // 투명한 프리팹 (좌표용)
 
     [SerializeField]
-    private Color[] cubeColors; // 타일의 색상 종류
+    private GameObject spawnerPf;               // 스포너 프리팹
+
+    [SerializeField]
+    private Color[] candyColors;                // 캔디 색상 종류
                                 
-    public bool[,] marker; // null값으로 만들기 위한 마커보드 생성
-    public string[,] cubeInitials;  // 큐브 이니셜 저장  
-    public Cube[,] cubes; // 모든 타일을 2차원 배열에 넣기
-    public GameObject[] spawners;  // 새로운 스포너 1처원 배열에 넣기
-    public Background[,] backgrounds; // 좌표 전용객체 2차원 배열에 넣기
+    public bool[,] marker;                      // null값으로 만들기 위한 마커보드 생성
+    public string[,] candyInitials;             // 큐브 이니셜 저장  
+    public Candy[,] candies;                    // 모든 타일을 2차원 배열에 넣기
+    public GameObject[] spawners;               // 새로운 스포너 1처원 배열에 넣기
+    public Background[,] backgrounds;           // 좌표 전용객체 2차원 배열에 넣기
 
-    public bool IsPickCube = false; // 타일을 쥐고있는지 판별
-    public GameObject currnetPickCube; // 현재 쥐고있는 타일
-    public PuzzleMatcher puzzleMatcher;  // 체크하고 있는 놈
+    public bool IsPickCandy = false;            // 타일을 쥐고있는지 판별
+    public Candy currnetPickCandy;              // 현재 쥐고있는 캔디
+    public PuzzleMatcher puzzleMatcher;         // 체크하고 있는 놈
+
+    private bool cycleComplete = false;
+
+    private bool onMoveAble = true;
+    public bool OnMoveAble
+    {
+        get => onMoveAble;
+        set => onMoveAble = value;
+    }
 
     private void Awake()
     {
@@ -65,93 +76,91 @@ public class Board : MonoBehaviour
     private int[] nullCounts;
     void Start()
     {
-        cubeCountX = amountX - emptyCount;
-        cubeCountY = amountY - emptyCount;
+        candyCountX = amountX - emptyCount;
+        candyCountY = amountY - emptyCount;
 
         int cellCount = stagesDB.Entities.Count;
-        cubes = new Cube[cubeCountX, cubeCountY];
-        spawners = new GameObject[cubeCountX];
-        backgrounds = new Background[cubeCountX, cubeCountY];
-        cubeInitials = new string[amountX, amountY];
-        marker = new bool[cubeCountX, cubeCountY];
-        nullCounts = new int[cubeCountX];
+        candies = new Candy[candyCountX, candyCountY];
+        spawners = new GameObject[candyCountX];
+        backgrounds = new Background[candyCountX, candyCountY];
+        candyInitials = new string[amountX, amountY];
+        marker = new bool[candyCountX, candyCountY];
+        nullCounts = new int[candyCountX];
 
         for (int y = 0; y < cellCount; y++)
         {
-            cubeInitials[0, y] = stagesDB.Entities[y].C0;
-            cubeInitials[1, y] = stagesDB.Entities[y].C1;
-            cubeInitials[2, y] = stagesDB.Entities[y].C2;
-            cubeInitials[3, y] = stagesDB.Entities[y].C3;
-            cubeInitials[4, y] = stagesDB.Entities[y].C4;
-            cubeInitials[5, y] = stagesDB.Entities[y].C5;
-            cubeInitials[6, y] = stagesDB.Entities[y].C6;
-            cubeInitials[7, y] = stagesDB.Entities[y].C7;
-            cubeInitials[8, y] = stagesDB.Entities[y].C8;
+            candyInitials[0, y] = stagesDB.Entities[y].C0;
+            candyInitials[1, y] = stagesDB.Entities[y].C1;
+            candyInitials[2, y] = stagesDB.Entities[y].C2;
+            candyInitials[3, y] = stagesDB.Entities[y].C3;
+            candyInitials[4, y] = stagesDB.Entities[y].C4;
+            candyInitials[5, y] = stagesDB.Entities[y].C5;
+            candyInitials[6, y] = stagesDB.Entities[y].C6;
+            candyInitials[7, y] = stagesDB.Entities[y].C7;
+            candyInitials[8, y] = stagesDB.Entities[y].C8;
         }
 
-        Init();
-
+        init();
     }
 
     // 퍼즐 생성
 
     #region MakePuzzle
-    private void Init()
+    private void init()
     {
         for (int x = 0; x < amountX; x++)
         {
             for (int y = 0; y < amountY; y++)
             {
                 Vector2 newPos = new Vector2(InitSpawnPoint.position.x + x * IntervalX, InitSpawnPoint.position.y - y * IntervalY);
-                //int ColorIndex = Random.Range(0, cubeColors.Length);   // 색깔을 랜덤으로 뽑기
 
-                if (cubeInitials[x, y] == "r" || cubeInitials[x, y] == "y" || cubeInitials[x, y] == "g" || cubeInitials[x, y] == "p")
+                if (candyInitials[x, y] == "r" || candyInitials[x, y] == "y" || candyInitials[x, y] == "g" || candyInitials[x, y] == "p")
                 {
-                    GameObject cubeObj = Instantiate(cubePf, newPos, Quaternion.identity);
+                    GameObject candyObj = Instantiate(candyPf, newPos, Quaternion.identity);
                     GameObject backGroundObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
-                    backGroundObj.transform.parent = transform;
+                    backGroundObj.transform.SetParent(transform);
 
-                    Cube cube = cubeObj.GetComponent<Cube>();
+                    Candy candy = candyObj.GetComponent<Candy>();
                     Background background = backGroundObj.GetComponent<Background>();
 
-                    cube.InitCoord(x - 1 , y - 1);
-                    cube.gameObject.name = $"({x - 1}, {y - 1})";
-                    cubeObj.transform.parent = transform;
-                    cubes[x - 1, y - 1] = cube;
+                    candy.onGround = true;                               // 처음에 큐브는 고정되어있으므로 onGround를 true로 해준다.
+                    candy.InitCoord(x - 1 , y - 1);                      
+                    candyObj.transform.SetParent(transform);
+                    candies[x - 1, y - 1] = candy;
 
                     background.InitCoord(x - 1, y - 1);
                     backgrounds[x - 1, y - 1] = background;
 
-                    switch (cubeInitials[x, y])
+                    switch (candyInitials[x, y])
                     {
                         case "g":
-                            cube.GetComponent<Image>().color = cubeColors[0];
-                            cube.Type = 0;
+                            candy.GetComponent<Image>().color = candyColors[0];
+                            candy.Type = 0;
                             break;
                         case "p":
-                            cube.GetComponent<Image>().color = cubeColors[1];
-                            cube.Type = 1;
+                            candy.GetComponent<Image>().color = candyColors[1];
+                            candy.Type = 1;
                             break;
                         case "r":
-                            cube.GetComponent<Image>().color = cubeColors[2];
-                            cube.Type = 2;
+                            candy.GetComponent<Image>().color = candyColors[2];
+                            candy.Type = 2;
                             break;
                         case "y":
-                            cube.GetComponent<Image>().color = cubeColors[3];
-                            cube.Type = 3;
+                            candy.GetComponent<Image>().color = candyColors[3];
+                            candy.Type = 3;
                             break;
                     }
                 }
-                else if (cubeInitials[x, y] == "h")
+                else if (candyInitials[x, y] == "h")
                 {
                     GameObject hole = Instantiate(holePf, newPos, Quaternion.identity);
-                    hole.transform.parent = transform;
+                    hole.transform.SetParent(transform);
 
                     // 구멍 부분에 스포너 설치
                     if (y == 0 && x != 0 && x != 8)
                     {
                         GameObject spawner = Instantiate(spawnerPf, newPos, Quaternion.identity);
-                        spawner.transform.parent = transform;
+                        spawner.transform.SetParent(transform);
                         spawners[x - 1] = spawner;
                     }
 
@@ -159,7 +168,7 @@ public class Board : MonoBehaviour
                 else
                 {
                     GameObject empty = Instantiate(emptyPf, newPos, Quaternion.identity);
-                    empty.transform.parent = transform;
+                    empty.transform.SetParent(transform);
                 }
             }
         }
@@ -169,53 +178,47 @@ public class Board : MonoBehaviour
 
 
 
-    private void InitMarker()
-    {
-        for (int x = 0; x < cubeCountX; x++)
-        {
-            for (int y = 0; y < cubeCountY; y++)
-            {
-                marker[x, y] = false;
-            }
-        }
-    }
 
     #endregion
 
     #region Arrangement
 
-    public void ArrangeCubes()
+    public void ArrangeCandies()
     {
-        destructionAndSaaveCubes();
+        onMoveAble = false;
+
+        destructionCandies();
         fillEmpty();
-        InitMarker();
+        createCandy();
+
+        cycleComplete = true;
     }
 
     //빈공간으로 인해 움직이는 큐브들을 스택에 저장한다.
-    Stack<Cube> saveCubes = new Stack<Cube>(); 
+    Stack<Candy> savedCandies = new Stack<Candy>(); 
 
-    private void destructionAndSaaveCubes()
+    private void destructionCandies()
     {
-        for (int x = 0; x < cubeCountX; x++)
+        for (int x = 0; x < candyCountX; x++)
         {
             nullCounts[x] = 0;
-            for (int y = 0; y < cubeCountY; y++)
+            for (int y = 0; y < candyCountY; y++)
             {
                 if(true == marker[x, y])
                 {
                     // 마킹된 큐브들을 제거시킨다.
-                    Destroy(cubes[x, y].gameObject);
+                    Destroy(candies[x, y].gameObject);
 
                     // 열마다 널값을 더해준다.
                     ++nullCounts[x];
 
                     // 제거된 오브젝트 좌표를 null로 만든다.
-                    cubes[x, y] = null;  
+                    candies[x, y] = null;  
                 }
                 else
                 {
                     // null을 제외한 좌표상 모든 큐브들을 담는다. (마킹된 열만 체크)
-                    saveCubes.Push(cubes[x, y]);
+                    savedCandies.Push(candies[x, y]);
                 }
             }
         }
@@ -223,45 +226,49 @@ public class Board : MonoBehaviour
 
     private void fillEmpty()
     {
-        for (int x = cubeCountX - 1; x >= 0; x--)
+        for (int x = candyCountX - 1; x >= 0; x--)
         {
-            for (int y = cubeCountY - 1; y >= cubeCountY - nullCounts.Length; y--)
+            for (int y = candyCountY - 1; y >= 0; y--)
             {
                 // 저장했던 큐브를 꺼낸다.
-                Cube cube = saveCubes?.Pop();
-                
-                // 스택이 비어있으면, 정렬된 좌표를 제외한 곳을 모두 null로 만든다.
-                if (saveCubes.Count == 0)
-                {
-                    createCubes();
-                    return;
-                }
+                Candy candy = savedCandies?.Pop();
 
                 // 좌표를 담아둔다.
-                int posX = cube.X;
+                int posX = candy.X;
                 // 꺼내봤는데 현재 x좌표와 맞지않는다면 다시 넣어준다.
-                if (cube.X != x)
+                if (candy.X != x)
                 {
-                    saveCubes.Push(cube); 
+                    savedCandies.Push(candy); 
                     break;
                 }
 
                 // 꺼낸큐브를 바닥부터 배치한다. (역순으로)
-                cube.SetPosition(backgrounds[posX, y].transform.position);
+                candy.SetPosition(backgrounds[posX, y].transform.position);
 
                 // 배열을 다시 세팅한다.
-                cubes[posX, y] = cube;
+                candies[posX, y] = candy;
 
                 // 큐브의 정보도 업데이트해준다.
-                cube.InitCoord(posX, y);
+                candy.InitCoord(posX, y);
+
+                // 스택이 비어있으면, 정렬된 좌표를 제외한 곳을 모두 null로 만든다.
+                if (savedCandies.Count == 0)
+                {
+                    return;
+                }
             }
         }
     }
 
     // 새로운 큐브를 생성하는 코루틴
-    private void createCubes()
+    private void createCandy()
     {
-        for (int x = 0; x < cubeCountX; x++)
+        StartCoroutine(spawnCandy());
+    }
+
+    private IEnumerator spawnCandy()
+    {
+        for (int x = 0; x < candyCountX; x++)
         {
             if (nullCounts[x] == 0)
             {
@@ -270,49 +277,86 @@ public class Board : MonoBehaviour
 
             for (int y = nullCounts[x] - 1; y >= 0; y--)
             {
-                // 원래있던 좌표를 널로 만들어준다.
-                cubes[x, y] = null;
+                // 원래있던 좌표를 널로 만들어준다.`
+                candies[x, y] = null;
 
-                                                                                                                    // 겹치지 않게 딜레이를 줌.
-                int ColorIndex = UnityEngine.Random.Range(0, cubeColors.Length);                                    // 색깔을 랜덤으로 뽑기
-                GameObject cubeObj = Instantiate(cubePf, spawners[x].transform.position, Quaternion.identity);      // 새로운 큐브 생성
-                cubeObj.transform.parent = transform;                                                               // 오브젝트 부모 지정
+                // 겹치지 않게 딜레이를 줌.
+                int ColorIndex = UnityEngine.Random.Range(0, candyColors.Length);                                    // 색깔을 랜덤으로 뽑기
+                GameObject candyObj = Instantiate(candyPf, spawners[x].transform.position, Quaternion.identity);      // 새로운 큐브 생성
+                candyObj.transform.SetParent(transform);                                                               // 오브젝트 부모 지정
 
-                Cube cube = cubeObj.GetComponent<Cube>();
-                cube.SetPosition(backgrounds[x, y].transform.position);                                             // 빈공간으로 큐브 배치
-                cube.InitCoord(x, y);                                                                               // 백그라운드 필드좌표와 동일한 좌표 설정
+                Candy candy = candyObj.GetComponent<Candy>();
+                candy.SetPosition(backgrounds[x, y].transform.position);                                             // 빈공간으로 큐브 배치
+                candy.InitCoord(x, y);                                                                               // 백그라운드 필드좌표와 동일한 좌표 설정
 
-                cube.SetColor(cubeColors[ColorIndex], ColorIndex);                                                  // 색깔 바꿔주기
+                candy.SetColor(candyColors[ColorIndex], ColorIndex);                                                  // 색깔 바꿔주기
 
                 // 새로운 큐브를 할당한다.
-                cubes[x, y] = cube;                                                              
+                candies[x, y] = candy;
+                yield return new WaitForSeconds(0.1f);
             }
         }
 
-        StartCoroutine(DelayReconfirm());
+        InitMarker();
     }
 
-    private IEnumerator DelayReconfirm()
+    private void InitMarker()
     {
-        yield return new WaitForSeconds(1.5f);
-        puzzleMatcher.CheckAllPattern();
+        for (int x = 0; x < candyCountX; x++)
+        {
+            for (int y = 0; y < candyCountY; y++)
+            {
+                marker[x, y] = false;
+            }
+        }
     }
-
     #endregion
 
-    #region Swap
-    public void SwapObj(Cube firstCube, Cube SecondCube)
-    {
-        Cube tempCube = cubes[firstCube.X, firstCube.Y];
-        cubes[firstCube.X, firstCube.Y] = cubes[SecondCube.X, SecondCube.Y];
-        cubes[SecondCube.X, SecondCube.Y] = tempCube;
+    // 좌표를 실시간으로 분석한다.
+    int matchPosCount;
 
-        Vector2 TempPos = firstCube.transform.position;
-        firstCube.transform.position = SecondCube.transform.position;
-        SecondCube.transform.position = TempPos;
+    private void comparePosition()
+    {
+        matchPosCount = 0;
+        for (int x = 0; x < candyCountX; x++)
+        {
+            for (int y = 0; y < candyCountY; y++)
+            {
+                if (candies[x, y] == null)
+                {
+                    return;
+                }
+
+                if (true == candies[x, y].onGround)
+                {
+                    ++matchPosCount;
+                }
+            }
+        }
+
+        Debug.Log(matchPosCount);
+
+        // 사이클이 전부 완료되었고, 배경 좌표와 실제 큐브좌표가 전부 일치할때 사이클을 다시 실행시켜준다.
+        if (cycleComplete == true && matchPosCount == candyCountX * candyCountY)
+        {
+            cycleComplete = false;
+            matchPosCount = 0;
+            puzzleMatcher.CheckAllPattern();
+        }
+    }
+    #region Swap
+
+    public void SwapObj(Candy firstCandy, Candy secondCandy)
+    {
+        Candy tempCandy = candies[firstCandy.X, firstCandy.Y];
+        candies[firstCandy.X, firstCandy.Y] = candies[secondCandy.X, secondCandy.Y];
+        candies[secondCandy.X, secondCandy.Y] = tempCandy;
+
+        Vector2 TempPos = firstCandy.transform.position;
+        firstCandy.transform.position = secondCandy.transform.position;
+        secondCandy.transform.position = TempPos;
     }
 
-    // 메모리 주소를 넘겨줘서 실질적인 값을 바꿔준다.
     public void SwapPos(ref int x1, ref int y1, ref int x2, ref int y2)
     {
         int tempX1 = x1;
@@ -324,5 +368,23 @@ public class Board : MonoBehaviour
         y2 = tempY1;
     }
 
+    public void CreateBall(int x, int y)
+    {
+        Destroy(candies[x, y].gameObject);
+        candies[x, y] = null;
+
+        GameObject newObj = Instantiate(ballPf, backgrounds[x, y].transform.position, Quaternion.identity);
+        Ball ball = newObj.GetComponent<Ball>();
+        ball.transform.SetParent(transform);
+
+        ball.InitCoord(x, y);
+        ball.SetColor(Color.white, 7);
+        candies[x, y] = ball;
+    }
+
+    private void Update()
+    {
+        comparePosition();
+    }
     #endregion
 }
