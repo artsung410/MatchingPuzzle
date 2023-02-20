@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class NormalCandy : Candy, IPointerClickHandler
-{
+public class NormalCandy : Candy
+{ 
     //public override void OnEndDrag(PointerEventData eventData)
     //{
     //    if (false == board.OnMoveAble)
@@ -18,49 +18,57 @@ public class NormalCandy : Candy, IPointerClickHandler
 
     //private void swap()
     //{
-    //    if (targetCandy == null)
+    //    if (board.SecondPickCandy == null)
     //    {
     //        return;
     //    }
 
-    //    board.SwapObj(this, targetCandy);
-    //    board.SwapPos(ref X, ref Y, ref targetCandy.X, ref targetCandy.Y);
+    //    board.SwapObj(this, board.SecondPickCandy);
+    //    board.SwapPos(ref X, ref Y, ref board.SecondPickCandy.X, ref board.SecondPickCandy.Y);
     //    GameManager.Instance.onSwapEvent?.Invoke();
 
     //}
 
 
     #region MouseClick
-    public void OnPointerClick(PointerEventData eventData)
+
+    public void ClickCandy()
     {
         if (false == board.OnMoveAble)
         {
             return;
         }
 
-        // 첫번째 타일을 클릭했을 때
-        if (false == board.IsPickCandy)
+        if (board.PickedCandies.Count != 0)
         {
-            board.FirstPickCandy = this;                                 
-            board.IsPickCandy = true;
-        }
-
-        // 두번째 타일을 클릭했을 때
-        else
-        {
-            Candy firstCandy = board.FirstPickCandy.GetComponent<Candy>();       
-
-            if ((Mathf.Abs(firstCandy.X - X) == 1 && Mathf.Abs(firstCandy.Y - Y) == 0) ||
-                 (Mathf.Abs(firstCandy.X - X) == 0 && Mathf.Abs(firstCandy.Y - Y) == 1))
+            if (board.PickedCandies[board.PickedCandies.Count - 1] == this)
             {
-                board.SecondPickCandy = board.candies[X, Y];
-                board.SwapObj(firstCandy, this);
-                board.SwapPos(ref firstCandy.X, ref firstCandy.Y, ref X, ref Y);
-                GameManager.Instance.onSwapEvent?.Invoke();
+                return;
             }
-            // 바뀐상태이므로 타일을 쥐고있는 상태가 아니다.
-            board.IsPickCandy = false;       
         }
+
+        board.PickCandies(this);
+
+        if (board.PickedCandies.Count == 2)
+        {
+            if ((Mathf.Abs(board.PickedCandies[0].X - board.PickedCandies[1].X) == 1 && Mathf.Abs(board.PickedCandies[0].Y - board.PickedCandies[1].Y) == 0) ||
+                 (Mathf.Abs(board.PickedCandies[0].X - board.PickedCandies[1].X) == 0 && Mathf.Abs(board.PickedCandies[0].Y - board.PickedCandies[1].Y) == 1))
+            {
+                board.SwapObj(board.PickedCandies[0], board.PickedCandies[1]);
+                board.SwapPos(ref board.PickedCandies[0].X, ref board.PickedCandies[0].Y, ref board.PickedCandies[1].X, ref board.PickedCandies[1].Y);
+                StartCoroutine(DelayInvoke());
+            }
+            else
+            {
+                board.PickedCandies.Clear();
+            }
+        }
+    }
+
+    private IEnumerator DelayInvoke()
+    {
+        yield return new WaitForSeconds(0.5f);
+        GameManager.Instance.onSwapEvent?.Invoke();
     }
     #endregion
 }

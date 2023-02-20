@@ -53,9 +53,7 @@ public class Board : MonoBehaviour
     public GameObject[] spawners;               // 새로운 스포너 1처원 배열에 넣기
     public Background[,] backgrounds;           // 좌표 전용객체 2차원 배열에 넣기
 
-    public bool IsPickCandy = false;            // 타일을 쥐고있는지 판별
-    public Candy FirstPickCandy;                 // 현재 쥐고있는 캔디
-    public Candy SecondPickCandy;                   // 바뀔 캔디
+    public List<Candy> PickedCandies;                 // 현재 쥐고있는 캔디
     public PuzzleMatcher puzzleMatcher;         
 
     private bool cycleComplete = false;
@@ -353,8 +351,8 @@ public class Board : MonoBehaviour
         candies[secondCandy.X, secondCandy.Y] = tempCandy;
 
         Vector2 TempPos = firstCandy.transform.position;
-        firstCandy.transform.position = secondCandy.transform.position;
-        secondCandy.transform.position = TempPos;
+        firstCandy.SetPositionForSwap(secondCandy.transform.position);
+        secondCandy.SetPositionForSwap(TempPos);
     }
 
     public void SwapPos(ref int x1, ref int y1, ref int x2, ref int y2)
@@ -380,6 +378,11 @@ public class Board : MonoBehaviour
         cnady.InitCoord(x, y);
         cnady.SetColor(Color.white, 7);
         candies[x, y] = cnady;
+    }
+
+    public void PickCandies(Candy candy)
+    {
+        PickedCandies.Add(candy);
     }
 
     private void Update()

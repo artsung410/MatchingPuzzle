@@ -30,11 +30,21 @@ public class PuzzleMatcher : MonoBehaviour
         CheckPatternColumn();
         CheckPattern_Square();
 
+        // 매칭이 안되었을 때
         if (false == onPattern)
         {
             board.OnMoveAble = true;
             checkOneCycle = false;
 
+            // 스왑한 캔디가 매칭이 안되었을 때
+            if (board.PickedCandies.Count != 0)
+            {
+                board.PickedCandies[0].SetPrevPos(board.PickedCandies[0], board.PickedCandies[1]);
+
+                board.PickedCandies.Clear();
+            }
+
+            // 먼치킨의 개수가 0이면 게임클리어를 실행한다.
             if (GameManager.Instance.MunchkinCount == 0)
             {
                 board.OnMoveAble = false;
@@ -43,6 +53,7 @@ public class PuzzleMatcher : MonoBehaviour
             return;
         }
 
+        board.PickedCandies.Clear();
         board.ArrangeCandies();
         checkOneCycle = true;
     }
@@ -144,16 +155,15 @@ public class PuzzleMatcher : MonoBehaviour
                         {
                             for (int j = 0; j < checkCount; j++)
                             {
-                                if (board.candies[x + i, y + j] != board.FirstPickCandy && board.candies[x + i, y + j] != board.SecondPickCandy)
+                                if (board.candies[x + i, y + j] != board.PickedCandies[0] && board.candies[x + i, y + j] != board.PickedCandies[1])
                                 {
                                     board.marker[x + i, y + j] = true;
                                 }
-                                else if (board.candies[x + i, y + j] == board.FirstPickCandy || board.candies[x + i, y + j] == board.SecondPickCandy)
+                                else if (board.candies[x + i, y + j] == board.PickedCandies[0] || board.candies[x + i, y + j] == board.PickedCandies[1])
                                 {
                                     board.marker[x + i, y + j] = false;
                                     board.CreateBall(x + i, y + j);
                                 }
-
                             }
                         }
                     }
