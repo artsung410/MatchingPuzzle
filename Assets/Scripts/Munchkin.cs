@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class Munchkin : Candy
+public class Munchkin : Candy, IEndDragHandler, IDragHandler
 {
     [SerializeField]
     private float MoveSpeed;
+    private int score;      
 
-    private int score = 0;
-
-    private bool isMoving = false;
+    private bool isMoving;
     public bool IsMoving
     {
         get => isMoving;
@@ -19,32 +18,91 @@ public class Munchkin : Candy
 
     private void Awake()
     {
+        Init();
+    }
+
+    private void Init()
+    {
         score = GameManager.Instance.blockDestructionScore;
         isMoving = false;
     }
 
-    public override void OnEndDrag(PointerEventData eventData)
+    #region drag
+    protected Vector2 dragEndPos;
+    protected Vector2 dragPos;
+    protected Vector2 moveDir;
+    protected Vector2 MousePos;
+
+    public void OnDrag(PointerEventData eventData)
     {
-        if (false == board.OnMoveAble)
+        Debug.Log("드래깅 중");
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        if (false == IsDraggable)
         {
             return;
         }
 
         isMoving = true;
-        base.OnEndDrag(eventData);
-        StartCoroutine(updateMove(moveDir));
+        dragEndPos = CalculateMousePostion();
+        moveDir = CalculateDir();
+        StartCoroutine(UpdateMove(moveDir));
     }
 
-    private IEnumerator updateMove(Vector2 moveDir)
+    // 마우스 포지션 계산
+    private Vector2 CalculateMousePostion()
     {
-        board.marker[X, Y] = true;
+        MousePos = Input.mousePosition;
+        MousePos = Camera.main.ScreenToWorldPoint(MousePos);
+        return MousePos;
+    }
 
+    // 방향 계산
+    private Vector2 CalculateDir()
+    {
+        float distanceX = dragEndPos.x;
+        float distanceY = dragEndPos.y;
+
+        float angle = Mathf.Atan2(distanceY, distanceX) * Mathf.Rad2Deg;
+
+        Debug.Log(angle);
+
+        if (angle >= 45 && angle < 135)
+        {
+            return Vector2.up;
+        }
+        else if (angle >= -135 && angle < -45)
+        {
+            return Vector2.down;
+        }
+        else if (angle >= -45 && angle < 45)
+        {
+            return Vector2.right;
+        }
+        else
+        {
+            return Vector2.left;
+        }
+    }
+
+    // 실시간 이동
+    private IEnumerator UpdateMove(Vector2 moveDir)
+    {
+        // 파괴시킬 캔디로 등록.
+        board.Marker[X, Y] = true;
+        GameManager.Instance.onButtonDisableEvent?.Invoke();
         while (true)
         {
             yield return new WaitForSeconds(0.01f);
+
+            // 정해진 방향으로 홀에 들어갈때까지 움직인다.
             transform.Translate(moveDir * Time.deltaTime * MoveSpeed);
         }
     }
+
+    #endregion
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -53,7 +111,7 @@ public class Munchkin : Candy
         {
             collision.gameObject.SetActive(false);
             Candy candy = collision.gameObject.GetComponent<Candy>();
-            board.marker[candy.X, candy.Y] = true;
+            board.Marker[candy.X, candy.Y] = true;
             GameManager.Instance.SetScore(score);
         }
 
@@ -66,13 +124,14 @@ public class Munchkin : Candy
             if (false == Munchkin.IsMoving)
             {
                 collision.gameObject.SetActive(false);
-                board.marker[Munchkin.X, Munchkin.Y] = true;
+                board.Marker[Munchkin.X, Munchkin.Y] = true;
                 GameManager.Instance.SetScore(score);
             }
 
             // 움직이는 먼치킨일 때
             else
             {
+                // 큼지막하게 만들어준다.
                 collision.transform.localScale = new Vector3(8, 8, 8);
             }
         }
@@ -84,5 +143,15 @@ public class Munchkin : Candy
             GameManager.Instance.SetMunchkinCount();
             board.ArrangeCandies();
         }
+    }
+
+    private void OnDisable()
+    {
+        if (true == isMoving)
+        {
+            GameManager.Instance.onButtonEnableEvent?.Invoke();
+        }
+
+        StopAllCoroutines();
     }
 }

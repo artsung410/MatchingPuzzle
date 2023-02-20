@@ -5,27 +5,24 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
+public class Candy : MonoBehaviour
 {
-    public Candy TargetCandy;
+    [HideInInspector] public int X;                         // 2차 배열의 x축 인덱스
+    [HideInInspector] public int Y;                         // 2차 배열의 y축 인덱스
+    [HideInInspector] public int Type;                      // 캔디 종류
+    [HideInInspector] public bool OnGround;                 // 정지 
+    [HideInInspector] public bool IsDraggable;              // 드래그 
+    [HideInInspector] public Board board;                   // 부모 클래스
+    [SerializeField] private Image image;                   // 캔디 이미지
+    [SerializeField] private Button button;                 // 캔디 버튼(스왑)
 
-
-    public int X;              // 2차 배열의 x축 인덱스
-
-
-    public int Y;              // 2차 배열의 y축 인덱스
-
-    [HideInInspector]
-    public int Type;           // 큐브 종류
-
-    [HideInInspector]
-    public Board board;        // 부모 클래스
-
-    [SerializeField]
-    private Image image;
-
-    [HideInInspector]
-    public bool onGround = false;
+    private void OnEnable()
+    {
+        OnGround = false;
+        IsDraggable = true;
+        GameManager.Instance.onButtonEnableEvent += EnableButton;
+        GameManager.Instance.onButtonDisableEvent += DisableButton;
+    }
 
     private void Start()
     {
@@ -33,6 +30,7 @@ public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
     }
 
     #region SetInfo
+
     public void InitCoord(int x, int y)
     {
         X = x;
@@ -44,12 +42,17 @@ public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
         image.color = color;
         Type = type;
     }
+    #endregion
 
+
+    #region SetPosition_CreateCandy
     public void SetPosition(Vector2 targetPos)
     {
-        onGround = false;
+        OnGround = false;
         StartCoroutine(SetPositioning(targetPos));
     }
+
+
 
     private IEnumerator SetPositioning(Vector2 targetPos)
     {
@@ -61,10 +64,12 @@ public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
             transform.position = new Vector2(transform.position.x, transform.position.y - (distance / 20));
         }
 
-        onGround = true;
-        board.OnMoveAble = true;
+        OnGround = true;
     }
+    #endregion
 
+
+    #region SetPosition_Swap
     private Vector2 prevPos;
 
     public void SetPrevPos(Candy firstCandy, Candy secondCandy)
@@ -76,11 +81,10 @@ public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
     public void SetPositionForSwap(Vector2 targetPos)
     {
         prevPos = transform.position;
-        board.OnMoveAble = false;
 
         if (targetPos.x - transform.position.x == 0)
         {
-            StartCoroutine(SetPositioning(targetPos));
+            StartCoroutine(SetPositioningY(targetPos));
         }
         else if (targetPos.y - transform.position.y == 0)
         {
@@ -88,8 +92,24 @@ public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
         }
     }
 
+    private IEnumerator SetPositioningY(Vector2 targetPos)
+    {
+        float distance = transform.position.y - targetPos.y;
+        GameManager.Instance.onButtonDisableEvent?.Invoke();
+
+        for (int i = 0; i < 20; i++)
+        {
+            yield return new WaitForSeconds(0.01f);
+            transform.position = new Vector2(transform.position.x, transform.position.y - (distance / 20));
+        }
+
+        OnGround = true;
+        GameManager.Instance.onButtonEnableEvent?.Invoke();
+    }
+
     private IEnumerator SetPositioningX(Vector2 targetPos)
     {
+        GameManager.Instance.onButtonDisableEvent?.Invoke();
         float distance = transform.position.x - targetPos.x;
 
         for (int i = 0; i < 20; i++)
@@ -98,63 +118,44 @@ public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
             transform.position = new Vector2(transform.position.x - (distance / 20), transform.position.y);
         }
 
-        onGround = true;
-        board.OnMoveAble = true;
+        OnGround = true;
+        GameManager.Instance.onButtonEnableEvent?.Invoke();
     }
     #endregion
 
-    #region drag
-    protected Vector2 dragBeginPos;
-    protected Vector2 dragEndPos;
-    protected Vector2 dragPos;
-    protected Vector2 moveDir;
-    protected Vector2 MousePos;
 
-    public virtual void OnDrag(PointerEventData eventData)
+    #region Button
+    // 버튼 비활성화
+    public void DisableButton()
     {
-        Debug.Log("드래깅 중");
+        IsDraggable = false;
+
+        if (button == null)
+        {
+            return;
+        }
+
+        button.interactable = false;
     }
 
-    public virtual void OnEndDrag(PointerEventData eventData)
+    // 버튼 활성화
+    public void EnableButton()
     {
-        dragEndPos = calculateMousePostion();
-        moveDir = calculateDir();
-    }
+        IsDraggable = true;
 
-
-    protected Vector2 calculateMousePostion()
-    {
-        MousePos = Input.mousePosition;
-        MousePos = Camera.main.ScreenToWorldPoint(MousePos);
-        return MousePos;
-    }
-
-    protected Vector2 calculateDir()
-    {
-        float distanceX = dragEndPos.x;
-        float distanceY = dragEndPos.y;
-
-        float angle = Mathf.Atan2(distanceY, distanceX) * Mathf.Rad2Deg;
-
-        Debug.Log(angle);
-        if (angle >= 45 && angle < 135)
+        if (button == null)
         {
-            return Vector2.up;
+            return;
         }
-        else if (angle >= -135 && angle < -45)
-        {
-            return Vector2.down;
-        }
-        else if (angle >= -45 && angle < 45)
-        {
-            return Vector2.right;
-        }
-        else
-        {
-            return Vector2.left;
-        }
+
+        button.interactable = true;
     }
 
     #endregion
 
+    private void OnDisable()
+    {
+        GameManager.Instance.onButtonEnableEvent -= EnableButton;
+        GameManager.Instance.onButtonDisableEvent -= DisableButton;
+    }
 }

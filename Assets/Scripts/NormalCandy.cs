@@ -4,41 +4,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class NormalCandy : Candy
-{ 
-    //public override void OnEndDrag(PointerEventData eventData)
-    //{
-    //    if (false == board.OnMoveAble)
-    //    {
-    //        return;
-    //    }
-
-    //    base.OnEndDrag(eventData);
-    //    swap();
-    //}
-
-    //private void swap()
-    //{
-    //    if (board.SecondPickCandy == null)
-    //    {
-    //        return;
-    //    }
-
-    //    board.SwapObj(this, board.SecondPickCandy);
-    //    board.SwapPos(ref X, ref Y, ref board.SecondPickCandy.X, ref board.SecondPickCandy.Y);
-    //    GameManager.Instance.onSwapEvent?.Invoke();
-
-    //}
-
-
+{
     #region MouseClick
 
     public void ClickCandy()
     {
-        if (false == board.OnMoveAble)
-        {
-            return;
-        }
-
         if (board.PickedCandies.Count != 0)
         {
             if (board.PickedCandies[board.PickedCandies.Count - 1] == this)

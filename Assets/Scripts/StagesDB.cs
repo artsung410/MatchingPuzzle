@@ -6,5 +6,5 @@ using UnityEngine;
 [ExcelAsset]
 public class StagesDB : ScriptableObject
 {
-    public List<StagesDBEntity> Entities; // Replace 'EntityType' to an actual type that is serializable.
+    public List<StagesDBEntity> Entities;
 }

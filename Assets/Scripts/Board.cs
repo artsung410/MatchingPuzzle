@@ -6,161 +6,138 @@ using System;
 
 public class Board : MonoBehaviour
 {
-    public int amountX; // 가로 수량
-    public int amountY; // 세로 수량
+    [SerializeField] private int IntervalX;                      // 타일간 간격(X)
+    [SerializeField] private int IntervalY;                      // 타일간 간격(Y)
+    [SerializeField] private int EmptyCount;                     // 빈구멍 개수 (한 행)
+    [SerializeField] private Transform InitSpawnPoint;           // 퍼즐 스폰 위치
+    [SerializeField] private StagesDB StagesDB;                  // 스테이지 CSV
+    [SerializeField] private GameObject MunchkinPF;              // 먼치킨 프리팹
+    [SerializeField] private GameObject CandyPf;                 // 캔디 프리팹
+    [SerializeField] private GameObject HolePf;                  // 홀 프리팹
+    [SerializeField] private GameObject EmptyPf;                 // 빈구멍 프리팹
+    [SerializeField] private GameObject BackgroundPf;            // 투명한 프리팹 (좌표용)
+    [SerializeField] private GameObject SpawnerPf;               // 스포너 프리팹
+    [SerializeField] private Color[] CandyColors;                // 캔디 색상 종류
 
-    public int candyCountX = 0;
-    public int candyCountY = 0;
+    private PuzzleMatcher puzzleMatcher;                         // 매칭 정보
+    private bool cycleComplete;                                  // 사이클 완료여부
+    private int[] nullCounts;                                    // 특정 X좌표의 빈공간 체크
 
-    public int InitPosX;
-    public int InitPosY;
-    public int IntervalX;
-    public int IntervalY;
+    public int AmountX;                                          // 가로 전체 수량
+    public int AmountY;                                          // 세로 전체 수량
 
-    [SerializeField]
-    private StagesDB stagesDB;                  // 엑셀 시트
+    public int CandyCountX;                                      // 가로 캔디 수량
+    public int CandyCountY;                                      // 세로 캔디 수량
 
-    [SerializeField]
-    private Transform InitSpawnPoint;
+    public Candy[,] Candies;                                     // 현재 운용중인 모든 캔디
+    public Background[,] Backgrounds;                            // 좌표보드
+    public bool[,] Marker;                                       // 캔디 제거용 마커보드 생성
 
-    [SerializeField]
-    private GameObject ballPf;                  // 볼 프리팹
-
-    [SerializeField]
-    private GameObject candyPf;                  // 타일 프리팹
-
-    [SerializeField]
-    private GameObject holePf;                  // 홀 프리팹
-
-    [SerializeField]
-    private GameObject emptyPf;                 // 빈구멍 프리팹
-
-    [SerializeField]
-    private int emptyCount;                     // 빈구멍 개수 (한 행)
-
-    [SerializeField]
-    private GameObject backgroundPf;            // 투명한 프리팹 (좌표용)
-
-    [SerializeField]
-    private GameObject spawnerPf;               // 스포너 프리팹
-
-    [SerializeField]
-    private Color[] candyColors;                // 캔디 색상 종류
-                                
-    public bool[,] marker;                      // null값으로 만들기 위한 마커보드 생성
-    public string[,] candyInitials;             // 큐브 이니셜 저장  
-    public Candy[,] candies;                    // 모든 타일을 2차원 배열에 넣기
-    public GameObject[] spawners;               // 새로운 스포너 1처원 배열에 넣기
-    public Background[,] backgrounds;           // 좌표 전용객체 2차원 배열에 넣기
-
-    public List<Candy> PickedCandies;                 // 현재 쥐고있는 캔디
-    public PuzzleMatcher puzzleMatcher;         
-
-    private bool cycleComplete = false;
-    private int[] nullCounts;
-
-    private bool onMoveAble = true;
-    public bool OnMoveAble
-    {
-        get => onMoveAble;
-        set => onMoveAble = value;
-    }
+    public string[,] CandyInitials;                              // CSV -> 큐브 이니셜 저장  
+    public GameObject[] Spawners;                                // 새로운 캔디 생성점
+    public List<Candy> PickedCandies;                            // 현재 쥐고있는 캔디 (스왑용)
 
     private void Awake()
     {
         puzzleMatcher = GetComponent<PuzzleMatcher>();
-        init();
+        Init();
     }
 
-    // 퍼즐 생성
-
     #region MakePuzzle
-    private void init()
+
+    // 퍼즐 생성
+    private void Init()
     {
-        candyCountX = amountX - emptyCount;
-        candyCountY = amountY - emptyCount;
+        // 캔디카운트는 빈 공간을 뺀 수량을 할당.
+        CandyCountX = AmountX - EmptyCount;
+        CandyCountY = AmountY - EmptyCount;
 
-        int cellCount = stagesDB.Entities.Count;
-        candies = new Candy[candyCountX, candyCountY];
-        spawners = new GameObject[candyCountX];
-        backgrounds = new Background[candyCountX, candyCountY];
-        candyInitials = new string[amountX, amountY];
-        marker = new bool[candyCountX, candyCountY];
-        nullCounts = new int[candyCountX];
 
+        // 퍼즐관련 변수 초기화
+        int cellCount = StagesDB.Entities.Count;
+        Candies = new Candy[CandyCountX, CandyCountY];
+        Spawners = new GameObject[CandyCountX];
+        Backgrounds = new Background[CandyCountX, CandyCountY];
+        CandyInitials = new string[AmountX, AmountY];
+        Marker = new bool[CandyCountX, CandyCountY];
+        nullCounts = new int[CandyCountX];
+        cycleComplete = false;
+
+        // DB를 불러온다.
+        // TODO: 좀 더 간결하게 작성
         for (int y = 0; y < cellCount; y++)
         {
-            candyInitials[0, y] = stagesDB.Entities[y].C0;
-            candyInitials[1, y] = stagesDB.Entities[y].C1;
-            candyInitials[2, y] = stagesDB.Entities[y].C2;
-            candyInitials[3, y] = stagesDB.Entities[y].C3;
-            candyInitials[4, y] = stagesDB.Entities[y].C4;
-            candyInitials[5, y] = stagesDB.Entities[y].C5;
-            candyInitials[6, y] = stagesDB.Entities[y].C6;
-            candyInitials[7, y] = stagesDB.Entities[y].C7;
-            candyInitials[8, y] = stagesDB.Entities[y].C8;
+            CandyInitials[0, y] = StagesDB.Entities[y].C0;
+            CandyInitials[1, y] = StagesDB.Entities[y].C1;
+            CandyInitials[2, y] = StagesDB.Entities[y].C2;
+            CandyInitials[3, y] = StagesDB.Entities[y].C3;
+            CandyInitials[4, y] = StagesDB.Entities[y].C4;
+            CandyInitials[5, y] = StagesDB.Entities[y].C5;
+            CandyInitials[6, y] = StagesDB.Entities[y].C6;
+            CandyInitials[7, y] = StagesDB.Entities[y].C7;
+            CandyInitials[8, y] = StagesDB.Entities[y].C8;
         }
 
-        for (int x = 0; x < amountX; x++)
+        // DB를 바탕으로 퍼즐요소들을 설치한다.
+        for (int x = 0; x < AmountX; x++)
         {
-            for (int y = 0; y < amountY; y++)
+            for (int y = 0; y < AmountY; y++)
             {
                 Vector2 newPos = new Vector2(InitSpawnPoint.position.x + x * IntervalX, InitSpawnPoint.position.y - y * IntervalY);
 
-                if (candyInitials[x, y] == "r" || candyInitials[x, y] == "y" || candyInitials[x, y] == "g" || candyInitials[x, y] == "p")
+                if (CandyInitials[x, y] == "r" || CandyInitials[x, y] == "y" || CandyInitials[x, y] == "g" || CandyInitials[x, y] == "p")
                 {
-                    GameObject candyObj = Instantiate(candyPf, newPos, Quaternion.identity);
-                    GameObject backGroundObj = Instantiate(backgroundPf, newPos, Quaternion.identity);
+                    GameObject candyObj = Instantiate(CandyPf, newPos, Quaternion.identity);
+                    GameObject backGroundObj = Instantiate(BackgroundPf, newPos, Quaternion.identity);
                     backGroundObj.transform.SetParent(transform);
 
                     Candy candy = candyObj.GetComponent<Candy>();
                     Background background = backGroundObj.GetComponent<Background>();
 
-                    candy.onGround = true;                               // 처음에 큐브는 고정되어있으므로 onGround를 true로 해준다.
+                    candy.OnGround = true;                               
                     candy.InitCoord(x - 1 , y - 1);                      
                     candyObj.transform.SetParent(transform);
-                    candies[x - 1, y - 1] = candy;
+                    Candies[x - 1, y - 1] = candy;
 
                     background.InitCoord(x - 1, y - 1);
-                    backgrounds[x - 1, y - 1] = background;
+                    Backgrounds[x - 1, y - 1] = background;
 
-                    switch (candyInitials[x, y])
+                    switch (CandyInitials[x, y])
                     {
                         case "g":
-                            candy.GetComponent<Image>().color = candyColors[0];
+                            candy.GetComponent<Image>().color = CandyColors[0];
                             candy.Type = 0;
                             break;
                         case "p":
-                            candy.GetComponent<Image>().color = candyColors[1];
+                            candy.GetComponent<Image>().color = CandyColors[1];
                             candy.Type = 1;
                             break;
                         case "r":
-                            candy.GetComponent<Image>().color = candyColors[2];
+                            candy.GetComponent<Image>().color = CandyColors[2];
                             candy.Type = 2;
                             break;
                         case "y":
-                            candy.GetComponent<Image>().color = candyColors[3];
+                            candy.GetComponent<Image>().color = CandyColors[3];
                             candy.Type = 3;
                             break;
                     }
                 }
-                else if (candyInitials[x, y] == "h")
+                else if (CandyInitials[x, y] == "h")
                 {
-                    GameObject hole = Instantiate(holePf, newPos, Quaternion.identity);
+                    GameObject hole = Instantiate(HolePf, newPos, Quaternion.identity);
                     hole.transform.SetParent(transform);
 
-                    // 구멍 부분에 스포너 설치
                     if (y == 0 && x != 0 && x != 8)
                     {
-                        GameObject spawner = Instantiate(spawnerPf, newPos, Quaternion.identity);
+                        GameObject spawner = Instantiate(SpawnerPf, newPos, Quaternion.identity);
                         spawner.transform.SetParent(transform);
-                        spawners[x - 1] = spawner;
+                        Spawners[x - 1] = spawner;
                     }
 
                 }
                 else
                 {
-                    GameObject empty = Instantiate(emptyPf, newPos, Quaternion.identity);
+                    GameObject empty = Instantiate(EmptyPf, newPos, Quaternion.identity);
                     empty.transform.SetParent(transform);
                 }
             }
@@ -168,71 +145,69 @@ public class Board : MonoBehaviour
 
         InitMarker();
     }
-
-
-
-
     #endregion
 
     #region Arrangement
 
+    // 퍼즐 정리
     public void ArrangeCandies()
     {
-        onMoveAble = false;
-
-        destructionCandies();
-        fillEmpty();
-        createCandy();
-
+        GameManager.Instance.onButtonDisableEvent?.Invoke();
+        DestructionCandies();
+        FillEmpty();
+        CreateCandies();
         cycleComplete = true;
     }
 
-    //빈공간으로 인해 움직이는 큐브들을 스택에 저장한다.
-    Stack<Candy> savedCandies = new Stack<Candy>();
-    
+    // 빈공간으로 인해 움직이는 캔디들을 스택에 저장한다.
+    private Stack<Candy> savedCandies = new Stack<Candy>();
 
 
-    private void destructionCandies()
+    // 퍼즐 파괴
+    private void DestructionCandies()
     {
-        for (int x = 0; x < candyCountX; x++)
+        for (int x = 0; x < CandyCountX; x++)
         {
             nullCounts[x] = 0;
-            for (int y = 0; y < candyCountY; y++)
+            for (int y = 0; y < CandyCountY; y++)
             {
-                if(true == marker[x, y])
+                if(true == Marker[x, y])
                 {
                     // 마킹된 큐브들을 제거시킨다.
-                    Destroy(candies[x, y].gameObject);
+                    Destroy(Candies[x, y].gameObject);
 
                     // 열마다 널값을 더해준다.
                     ++nullCounts[x];
 
                     // 제거된 오브젝트 좌표를 null로 만든다.
-                    candies[x, y] = null;
+                    Candies[x, y] = null;
 
+                    // 스코어를 업데이트한다.
                     int score = GameManager.Instance.blockDestructionScore;
                     GameManager.Instance.SetScore(score);
                 }
                 else
                 {
                     // null을 제외한 좌표상 모든 큐브들을 담는다. (마킹된 열만 체크)
-                    savedCandies.Push(candies[x, y]);
+                    savedCandies.Push(Candies[x, y]);
                 }
             }
         }
     }
 
-    private void fillEmpty()
+    // 퍼즐 정렬
+    private void FillEmpty()
     {
-        for (int x = candyCountX - 1; x >= 0; x--)
+        for (int x = CandyCountX - 1; x >= 0; x--)
         {
-            for (int y = candyCountY - 1; y >= 0; y--)
+            for (int y = CandyCountY - 1; y >= 0; y--)
             {
                 // 저장했던 큐브를 꺼낸다.
                 Candy candy = savedCandies?.Pop();
 
                 // 좌표를 담아둔다.
                 int posX = candy.X;
+
                 // 꺼내봤는데 현재 x좌표와 맞지않는다면 다시 넣어준다.
                 if (candy.X != x)
                 {
@@ -241,12 +216,12 @@ public class Board : MonoBehaviour
                 }
 
                 // 꺼낸큐브를 바닥부터 배치한다. (역순으로)
-                candy.SetPosition(backgrounds[posX, y].transform.position);
+                candy.SetPosition(Backgrounds[posX, y].transform.position);
 
                 // 배열을 다시 세팅한다.
-                candies[posX, y] = candy;
+                Candies[posX, y] = candy;
 
-                // 큐브의 정보도 업데이트해준다.
+                // 큐브의 정보도 업데이트 해준다.
                 candy.InitCoord(posX, y);
 
                 // 스택이 비어있으면, 정렬된 좌표를 제외한 곳을 모두 null로 만든다.
@@ -258,16 +233,18 @@ public class Board : MonoBehaviour
         }
     }
 
-    // 새로운 큐브를 생성하는 코루틴
-    public void createCandy()
+    // 퍼즐 생성
+    public void CreateCandies()
     {
-        StartCoroutine(spawnCandy());
+        StartCoroutine(SpawnCandy());
     }
 
-    private IEnumerator spawnCandy()
+    // 퍼즐 생성
+    private IEnumerator SpawnCandy()
     {
-        for (int x = 0; x < candyCountX; x++)
+        for (int x = 0; x < CandyCountX; x++)
         {
+            // 현재 x좌표에 빈공간이 없으면 다음 x좌표로 건너뛴다.
             if (nullCounts[x] == 0)
             {
                 continue;
@@ -275,86 +252,109 @@ public class Board : MonoBehaviour
 
             for (int y = nullCounts[x] - 1; y >= 0; y--)
             {
-                // 원래있던 좌표를 널로 만들어준다.`
-                candies[x, y] = null;
+                // 원래있던 좌표를 널로 만들어준다.
+                Candies[x, y] = null;
 
-                // 겹치지 않게 딜레이를 줌.
-                int ColorIndex = UnityEngine.Random.Range(0, candyColors.Length);                                    // 색깔을 랜덤으로 뽑기
-                GameObject candyObj = Instantiate(candyPf, spawners[x].transform.position, Quaternion.identity);      // 새로운 큐브 생성
-                candyObj.transform.SetParent(transform);                                                               // 오브젝트 부모 지정
+                // 랜덤 색상 적용
+                int ColorIndex = UnityEngine.Random.Range(0, CandyColors.Length);
 
+                // 캔디 생성 & 오브젝트 부모 지정
+                GameObject candyObj = Instantiate(CandyPf, Spawners[x].transform.position, Quaternion.identity);      
+                candyObj.transform.SetParent(transform);
+
+                // 캔디 배치 & 초기화
                 Candy candy = candyObj.GetComponent<Candy>();
-                candy.SetPosition(backgrounds[x, y].transform.position);                                             // 빈공간으로 큐브 배치
-                candy.InitCoord(x, y);                                                                               // 백그라운드 필드좌표와 동일한 좌표 설정
-
-                candy.SetColor(candyColors[ColorIndex], ColorIndex);                                                  // 색깔 바꿔주기
+                candy.DisableButton();
+                candy.SetPosition(Backgrounds[x, y].transform.position);                                             
+                candy.InitCoord(x, y);                                                                           
+                candy.SetColor(CandyColors[ColorIndex], ColorIndex);                                                 
 
                 // 새로운 큐브를 할당한다.
-                candies[x, y] = candy;
-                yield return new WaitForSeconds(0.1f);
+                Candies[x, y] = candy;
+
+                // 겹치지 않게 딜레이를 줌.
+                yield return new WaitForSeconds(0.01f);
             }
         }
-
         InitMarker();
     }
 
+    // 퍼즐 생성
     private void InitMarker()
     {
-        for (int x = 0; x < candyCountX; x++)
+        for (int x = 0; x < CandyCountX; x++)
         {
-            for (int y = 0; y < candyCountY; y++)
+            for (int y = 0; y < CandyCountY; y++)
             {
-                marker[x, y] = false;
+                Marker[x, y] = false;
             }
         }
     }
     #endregion
 
-    // 좌표를 실시간으로 분석한다.
-    int matchPosCount;
+    #region FinalCheck
 
-    private void comparePosition()
+    private int matchPosCount;
+
+    // 좌표를 실시간으로 분석한다.
+    private void ComparePosition()
     {
         matchPosCount = 0;
-        for (int x = 0; x < candyCountX; x++)
+        for (int x = 0; x < CandyCountX; x++)
         {
-            for (int y = 0; y < candyCountY; y++)
+            for (int y = 0; y < CandyCountY; y++)
             {
-                if (candies[x, y] == null)
+                if (Candies[x, y] == null)
                 {
                     return;
                 }
 
-                if (true == candies[x, y].onGround)
+                // 캔디가 전부 멈춰있거나, 바닥에 도달했으면 매치카운트를 1씩 더해준다.
+                if (true == Candies[x, y].OnGround)
                 {
                     ++matchPosCount;
                 }
             }
         }
 
-        Debug.Log(matchPosCount);
-
         // 사이클이 전부 완료되었고, 배경 좌표와 실제 큐브좌표가 전부 일치할때 사이클을 다시 실행시켜준다.
-        if (cycleComplete == true && matchPosCount == candyCountX * candyCountY)
+        if (cycleComplete == true && matchPosCount == CandyCountX * CandyCountY)
         {
             cycleComplete = false;
             matchPosCount = 0;
-            puzzleMatcher.CheckAllPattern();
+            StartCoroutine(DelayInvoke());
         }
     }
+
+    // 다음 사이클을 실행하기전 잠깐 대기시켜준다.
+    private IEnumerator DelayInvoke()
+    {
+        yield return new WaitForSeconds(0.5f);
+        puzzleMatcher.CheckAllPattern();
+    }
+
+    private void Update()
+    {
+        ComparePosition();
+    }
+
+    #endregion
+
     #region Swap
 
+    // 인접한 캔디를 스왑시켜준다.
     public void SwapObj(Candy firstCandy, Candy secondCandy)
     {
-        Candy tempCandy = candies[firstCandy.X, firstCandy.Y];
-        candies[firstCandy.X, firstCandy.Y] = candies[secondCandy.X, secondCandy.Y];
-        candies[secondCandy.X, secondCandy.Y] = tempCandy;
+        Candy tempCandy = Candies[firstCandy.X, firstCandy.Y];
+        Candies[firstCandy.X, firstCandy.Y] = Candies[secondCandy.X, secondCandy.Y];
+        Candies[secondCandy.X, secondCandy.Y] = tempCandy;
 
         Vector2 TempPos = firstCandy.transform.position;
         firstCandy.SetPositionForSwap(secondCandy.transform.position);
         secondCandy.SetPositionForSwap(TempPos);
     }
 
+    // 주소를 가져와서 실질적인 값을 바꿔준다.
     public void SwapPos(ref int x1, ref int y1, ref int x2, ref int y2)
     {
         int tempX1 = x1;
@@ -366,28 +366,28 @@ public class Board : MonoBehaviour
         y2 = tempY1;
     }
 
+    // 스왑시킬 캔디를 리스트에 담는다.
+    public void PickCandies(Candy candy)
+    {
+        PickedCandies.Add(candy);
+    }
+    #endregion
+
+    #region SpecialCandy
+
+    // 먼치킨 생성
     public void CreateBall(int x, int y)
     {
-        Destroy(candies[x, y].gameObject);
-        candies[x, y] = null;
+        Destroy(Candies[x, y].gameObject);
+        Candies[x, y] = null;
 
-        GameObject newObj = Instantiate(ballPf, backgrounds[x, y].transform.position, Quaternion.identity);
+        GameObject newObj = Instantiate(MunchkinPF, Backgrounds[x, y].transform.position, Quaternion.identity);
         Candy cnady = newObj.GetComponent<Candy>();
         cnady.transform.SetParent(transform);
 
         cnady.InitCoord(x, y);
         cnady.SetColor(Color.white, 7);
-        candies[x, y] = cnady;
-    }
-
-    public void PickCandies(Candy candy)
-    {
-        PickedCandies.Add(candy);
-    }
-
-    private void Update()
-    {
-        comparePosition();
+        Candies[x, y] = cnady;
     }
     #endregion
 }
