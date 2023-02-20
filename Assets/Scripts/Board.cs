@@ -54,10 +54,12 @@ public class Board : MonoBehaviour
     public Background[,] backgrounds;           // 좌표 전용객체 2차원 배열에 넣기
 
     public bool IsPickCandy = false;            // 타일을 쥐고있는지 판별
-    public Candy currnetPickCandy;              // 현재 쥐고있는 캔디
-    public PuzzleMatcher puzzleMatcher;         // 체크하고 있는 놈
+    public Candy FirstPickCandy;                 // 현재 쥐고있는 캔디
+    public Candy SecondPickCandy;                   // 바뀔 캔디
+    public PuzzleMatcher puzzleMatcher;         
 
     private bool cycleComplete = false;
+    private int[] nullCounts;
 
     private bool onMoveAble = true;
     public bool OnMoveAble
@@ -69,10 +71,13 @@ public class Board : MonoBehaviour
     private void Awake()
     {
         puzzleMatcher = GetComponent<PuzzleMatcher>();
+        init();
     }
 
-    private int[] nullCounts;
-    void Start()
+    // 퍼즐 생성
+
+    #region MakePuzzle
+    private void init()
     {
         candyCountX = amountX - emptyCount;
         candyCountY = amountY - emptyCount;
@@ -98,14 +103,6 @@ public class Board : MonoBehaviour
             candyInitials[8, y] = stagesDB.Entities[y].C8;
         }
 
-        init();
-    }
-
-    // 퍼즐 생성
-
-    #region MakePuzzle
-    private void init()
-    {
         for (int x = 0; x < amountX; x++)
         {
             for (int y = 0; y < amountY; y++)

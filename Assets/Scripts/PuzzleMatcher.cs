@@ -11,6 +11,7 @@ public class PuzzleMatcher : MonoBehaviour
     private Board board;
 
     private bool onPattern = false;
+    private bool checkOneCycle = false;
 
     private void Awake()
     {
@@ -25,7 +26,6 @@ public class PuzzleMatcher : MonoBehaviour
     public void CheckAllPattern()
     {
         onPattern = false;
-
         CheckPatternRow();
         CheckPatternColumn();
         CheckPattern_Square();
@@ -33,8 +33,9 @@ public class PuzzleMatcher : MonoBehaviour
         if (false == onPattern)
         {
             board.OnMoveAble = true;
+            checkOneCycle = false;
 
-            if(GameManager.Instance.MunchkinCount == 0)
+            if (GameManager.Instance.MunchkinCount == 0)
             {
                 board.OnMoveAble = false;
                 StartCoroutine(DelayGameClear());
@@ -43,6 +44,7 @@ public class PuzzleMatcher : MonoBehaviour
         }
 
         board.ArrangeCandies();
+        checkOneCycle = true;
     }
 
     private IEnumerator DelayGameClear()
@@ -135,10 +137,35 @@ public class PuzzleMatcher : MonoBehaviour
                 if (firstCube.Type == secondCube.Type && firstCube.Type == thirdCube.Type && firstCube.Type == fourthCube.Type)
                 {
                     onPattern = true;
-                    board.marker[x, y] = true;
-                    board.marker[x + 1, y] = true;
-                    board.marker[x, y + 1] = true;
-                    board.CreateBall(x + 1, y + 1);
+
+                    if (false == checkOneCycle)
+                    {
+                        for (int i = 0; i < checkCount; i++)
+                        {
+                            for (int j = 0; j < checkCount; j++)
+                            {
+                                if (board.candies[x + i, y + j] != board.FirstPickCandy && board.candies[x + i, y + j] != board.SecondPickCandy)
+                                {
+                                    board.marker[x + i, y + j] = true;
+                                }
+                                else if (board.candies[x + i, y + j] == board.FirstPickCandy || board.candies[x + i, y + j] == board.SecondPickCandy)
+                                {
+                                    board.marker[x + i, y + j] = false;
+                                    board.CreateBall(x + i, y + j);
+                                }
+
+                            }
+                        }
+                    }
+                    else
+                    {
+                        board.marker[x, y] = true;
+                        board.marker[x, y + 1] = true;
+                        board.marker[x + 1, y + 1] = true;
+                        board.marker[x + 1, y] = false;
+                        board.CreateBall(x + 1, y);
+                    }
+                
                 }
             }
         }

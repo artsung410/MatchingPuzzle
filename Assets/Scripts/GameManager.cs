@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using TMPro;
+using UnityEngine.SceneManagement;
 
-public class GameManager : Singleton<GameManager>
+public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance;
+    
     public Action onSwapEvent;
-
     [SerializeField]
     private GameObject ClearPanel;
-
-    [SerializeField]
-    private TextMeshProUGUI MoveTMPro;
 
     [SerializeField]
     private TextMeshProUGUI ScoreTMPro;
@@ -33,9 +32,6 @@ public class GameManager : Singleton<GameManager>
     public int MunchikinGoalInScore;
     public int blockDestructionScore;
 
-
-    private int moveCount;
-
     private int scoreCount;
 
     private int munchkinCount;
@@ -45,18 +41,17 @@ public class GameManager : Singleton<GameManager>
         set => munchkinCount = value;
     }
 
-    private void Start()
+    private void Awake()
     {
+        Instance = this;
         init();
     }
 
     private void init()
     {
-        moveCount = InitMoveCount;
         munchkinCount = MunchkinGoalCount;
         scoreCount = 0;
 
-        MoveTMPro.text = moveCount.ToString();
         ScoreTMPro.text = scoreCount.ToString();
         MunchkinCountTMPro.text = munchkinCount.ToString();
     }
@@ -82,5 +77,10 @@ public class GameManager : Singleton<GameManager>
     public void ActivationClearPanel()
     {
         ClearPanel.SetActive(true);
+    }
+
+    public void LoadGameScene()
+    {
+        SceneManager.LoadScene(0);
     }
 }

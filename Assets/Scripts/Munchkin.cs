@@ -10,9 +10,17 @@ public class Munchkin : Candy
 
     private int score = 0;
 
-    private void OnEnable()
+    private bool isMoving = false;
+    public bool IsMoving
+    {
+        get => isMoving;
+        set => isMoving = value;
+    }
+
+    private void Awake()
     {
         score = GameManager.Instance.blockDestructionScore;
+        isMoving = false;
     }
 
     public override void OnEndDrag(PointerEventData eventData)
@@ -22,6 +30,7 @@ public class Munchkin : Candy
             return;
         }
 
+        isMoving = true;
         base.OnEndDrag(eventData);
         StartCoroutine(updateMove(moveDir));
     }
@@ -39,7 +48,8 @@ public class Munchkin : Candy
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if(collision.gameObject.layer == 6)
+        // 일반캔디랑 부딪혔을 때
+        if(collision.gameObject.layer == 6 )
         {
             collision.gameObject.SetActive(false);
             Candy candy = collision.gameObject.GetComponent<Candy>();
@@ -47,6 +57,27 @@ public class Munchkin : Candy
             GameManager.Instance.SetScore(score);
         }
 
+        // 먼치킨끼리 부딪혔을 때
+        else if (collision.gameObject.layer == 7)
+        {
+            Munchkin Munchkin = collision.gameObject.GetComponent<Munchkin>();
+
+            // 멈춰있는 먼치킨일때
+            if (false == Munchkin.IsMoving)
+            {
+                collision.gameObject.SetActive(false);
+                board.marker[Munchkin.X, Munchkin.Y] = true;
+                GameManager.Instance.SetScore(score);
+            }
+
+            // 움직이는 먼치킨일 때
+            else
+            {
+                collision.transform.localScale = new Vector3(8, 8, 8);
+            }
+        }
+
+        // 먼치킨이 홀에 들어갔을 때
         else if (collision.gameObject.layer == 8)
         {
             Destroy(gameObject);

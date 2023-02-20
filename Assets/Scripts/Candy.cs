@@ -25,8 +25,6 @@ public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
     [HideInInspector]
     public bool onGround = false;
 
-    public Candy targetCandy;
-
     private void Start()
     {
         board = GetComponentInParent<Board>();
@@ -104,22 +102,18 @@ public class Candy : MonoBehaviour, IEndDragHandler, IDragHandler
         Debug.Log(angle);
         if (angle > 45 && angle < 135)
         {
-            targetCandy = Y - 1 >= 0 ? board.candies[X, Y - 1] : null;
             return Vector2.up;
         }
         else if (angle > -135 && angle < -45)
         {
-            targetCandy = Y + 1 < board.candyCountY ? board.candies[X, Y + 1] : null;
             return Vector2.down;
         }
         else if (angle > -45 && angle < 45)
         {
-            targetCandy = X + 1 < board.candyCountX ? board.candies[X + 1, Y] : null;
             return Vector2.right;
         }
         else
         {
-            targetCandy = X - 1 >=0 ? board.candies[X - 1, Y] : null;
             return Vector2.left;
         }
     }
