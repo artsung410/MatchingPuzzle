@@ -112,7 +112,6 @@ public class Candy : MonoBehaviour
     private IEnumerator SetPositioningY(Vector2 targetPos)
     {
         float distance = transform.position.y - targetPos.y;
-        GameManager.Instance.onButtonDisableEvent?.Invoke();
 
         for (int i = 0; i < 20; i++)
         {
@@ -121,12 +120,10 @@ public class Candy : MonoBehaviour
         }
 
         OnGround = true;
-        GameManager.Instance.onButtonEnableEvent?.Invoke();
     }
 
     private IEnumerator SetPositioningX(Vector2 targetPos)
     {
-        GameManager.Instance.onButtonDisableEvent?.Invoke();
         float distance = transform.position.x - targetPos.x;
 
         for (int i = 0; i < 20; i++)
@@ -136,7 +133,6 @@ public class Candy : MonoBehaviour
         }
 
         OnGround = true;
-        GameManager.Instance.onButtonEnableEvent?.Invoke();
     }
 
     #endregion
