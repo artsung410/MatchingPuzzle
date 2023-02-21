@@ -28,10 +28,6 @@ public class Munchkin : Candy, IBeginDragHandler, IEndDragHandler, IDragHandler
     }
 
     #region drag
-    protected Vector2 dragEndPos;
-    protected Vector2 dragBeginPos;
-    protected Vector2 moveDir;
-    protected Vector2 MousePos;
 
     public void OnBeginDrag(PointerEventData eventData)
     {

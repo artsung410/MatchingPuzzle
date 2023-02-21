@@ -1294,8 +1294,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4b6f92a95552414fbebc6cd63a2361f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IntervalX: 120
-  IntervalY: 120
+  IntervalX: 115
+  IntervalY: 115
   EmptyCount: 2
   InitSpawnPoint: {fileID: 899341537}
   StagesDB: {fileID: 11400000, guid: a66d62eda1bbd8f4d98edab686c3e10b, type: 2}
@@ -1315,7 +1315,7 @@ MonoBehaviour:
   CandyCountX: 0
   CandyCountY: 0
   Spawners: []
-  PickedCandies: []
+  PickedCandy: {fileID: 0}
 --- !u!1 &844346528
 GameObject:
   m_ObjectHideFlags: 0
@@ -1552,7 +1552,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 115, y: 450}
+  m_AnchoredPosition: {x: 90, y: 450}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!1 &1216651565

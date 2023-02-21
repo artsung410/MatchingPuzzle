@@ -6,8 +6,8 @@ using System;
 
 public class Board : MonoBehaviour
 {
-    [SerializeField] private int IntervalX;                      // 타일간 간격(X)
-    [SerializeField] private int IntervalY;                      // 타일간 간격(Y)
+    [SerializeField] private float IntervalX;                      // 타일간 간격(X)
+    [SerializeField] private float IntervalY;                      // 타일간 간격(Y)
     [SerializeField] private int EmptyCount;                     // 빈구멍 개수 (한 행)
     [SerializeField] private Transform InitSpawnPoint;           // 퍼즐 스폰 위치
     [SerializeField] private StagesDB StagesDB;                  // 스테이지 CSV
@@ -35,7 +35,7 @@ public class Board : MonoBehaviour
 
     public string[,] CandyInitials;                              // CSV -> 큐브 이니셜 저장  
     public GameObject[] Spawners;                                // 새로운 캔디 생성점
-    public List<Candy> PickedCandies;                            // 현재 쥐고있는 캔디 (스왑용)
+    public Candy PickedCandy;                                    // 스왑예정인 캔디
 
     private void Awake()
     {
@@ -51,7 +51,6 @@ public class Board : MonoBehaviour
         // 캔디카운트는 빈 공간을 뺀 수량을 할당.
         CandyCountX = AmountX - EmptyCount;
         CandyCountY = AmountY - EmptyCount;
-
 
         // 퍼즐관련 변수 초기화
         int cellCount = StagesDB.Entities.Count;
@@ -357,10 +356,6 @@ public class Board : MonoBehaviour
         Candy tempCandy = Candies[firstCandy.X, firstCandy.Y];
         Candies[firstCandy.X, firstCandy.Y] = Candies[secondCandy.X, secondCandy.Y];
         Candies[secondCandy.X, secondCandy.Y] = tempCandy;
-
-        Vector2 TempPos = firstCandy.transform.position;
-        firstCandy.SetPositionForSwap(secondCandy.transform.position);
-        secondCandy.SetPositionForSwap(TempPos);
     }
 
     // 주소를 가져와서 실질적인 값을 바꿔준다.
@@ -375,11 +370,6 @@ public class Board : MonoBehaviour
         y2 = tempY1;
     }
 
-    // 스왑시킬 캔디를 리스트에 담는다.
-    public void PickCandies(Candy candy)
-    {
-        PickedCandies.Add(candy);
-    }
     #endregion
 
     #region SpecialCandy

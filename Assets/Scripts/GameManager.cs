@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject MunchkinCheckImage;              // 먼치킨 이미지
 
     [Header("Events")]
-    public Action onSwapEvent;                                           // 스왑 이벤트
+    //public Action onSwapEvent;                                           // 스왑 이벤트
     public Action onButtonEnableEvent;                                   // 캔디버튼 활성화 이벤트
     public Action onButtonDisableEvent;                                  // 캔디버튼 비활성화 이벤트
 

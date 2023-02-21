@@ -7,14 +7,22 @@ using TMPro;
 
 public class Candy : MonoBehaviour
 {
-    [HideInInspector] public int X;                         // 2차 배열의 x축 인덱스
-    [HideInInspector] public int Y;                         // 2차 배열의 y축 인덱스
+    public int X;                                           // 2차 배열의 x축 인덱스
+    public int Y;                                           // 2차 배열의 y축 인덱스
     [HideInInspector] public int Type;                      // 캔디 종류
     [HideInInspector] public bool OnGround;                 // 정지 
     [HideInInspector] public bool IsDraggable;              // 드래그 
     [HideInInspector] public Board board;                   // 부모 클래스
+    [HideInInspector] public PuzzleMatcher puzzleMatcher;   // 부모 클래스
     [SerializeField] private Image image;                   // 캔디 이미지
     [SerializeField] private Button button;                 // 캔디 버튼(스왑)
+
+    protected Vector2 dragEndPos;
+    protected Vector2 dragBeginPos;
+    protected Vector2 moveDir;
+    protected Vector2 MousePos;
+
+    public Candy targetCandy;
 
     private void OnEnable()
     {
@@ -27,6 +35,7 @@ public class Candy : MonoBehaviour
     private void Start()
     {
         board = GetComponentInParent<Board>();
+        puzzleMatcher = GetComponentInParent<PuzzleMatcher>();
     }
 
     #region SetInfo
@@ -67,7 +76,6 @@ public class Candy : MonoBehaviour
     }
     #endregion
 
-
     #region SetPosition_Swap
     private Vector2 prevPos;
 
@@ -75,6 +83,16 @@ public class Candy : MonoBehaviour
     {
         board.SwapObj(firstCandy, secondCandy);
         board.SwapPos(ref firstCandy.X, ref firstCandy.Y, ref secondCandy.X, ref secondCandy.Y);
+
+        StartCoroutine(DelayPrvePositioning(firstCandy, secondCandy));
+    }
+
+    private IEnumerator DelayPrvePositioning(Candy firstCandy, Candy secondCandy)
+    {
+        yield return new WaitForSeconds(0.2f);
+        Vector2 TempPos = firstCandy.transform.position;
+        SetPositionForSwap(secondCandy.transform.position);
+        secondCandy.SetPositionForSwap(TempPos);
     }
 
     public void SetPositionForSwap(Vector2 targetPos)
@@ -120,8 +138,8 @@ public class Candy : MonoBehaviour
         OnGround = true;
         GameManager.Instance.onButtonEnableEvent?.Invoke();
     }
-    #endregion
 
+    #endregion
 
     #region Button
     // 버튼 비활성화

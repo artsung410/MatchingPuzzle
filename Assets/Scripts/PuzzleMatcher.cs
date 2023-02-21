@@ -17,7 +17,7 @@ public class PuzzleMatcher : MonoBehaviour
 
     private void OnEnable()
     {
-        GameManager.Instance.onSwapEvent += CheckAllPattern;
+        //GameManager.Instance.onSwapEvent += CheckAllPattern;
     }
 
 
@@ -38,14 +38,13 @@ public class PuzzleMatcher : MonoBehaviour
             GameManager.Instance.onButtonEnableEvent?.Invoke();
 
             // 스왑한 캔디가 매칭이 안되었을 때
-            if (board.PickedCandies.Count != 0)
+            if (board.PickedCandy != null)
             {
-
                 // 캔디를 원상태로 돌려준다.
-                board.PickedCandies[0].SetPrevPos(board.PickedCandies[0], board.PickedCandies[1]);
+                board.PickedCandy.SetPrevPos(board.PickedCandy, board.PickedCandy.targetCandy);
 
                 // 스왑한 캔디정보를 제거 해준다.
-                board.PickedCandies.Clear();
+                board.PickedCandy = null;
             }
 
             // 먼치킨의 개수가 0이면 게임클리어를 실행한다.
@@ -60,7 +59,7 @@ public class PuzzleMatcher : MonoBehaviour
         // 매칭이 되었을 때
 
         // 스왑한 캔디정보를 제거 해준다.
-        board.PickedCandies.Clear();
+        board.PickedCandy = null;
 
         // 퍼즐 정리함수를 실행시킨다.
         board.ArrangeCandies();
@@ -181,16 +180,16 @@ public class PuzzleMatcher : MonoBehaviour
                         {
                             for (int j = 0; j < checkCount; j++)
                             {
-                                if (x > board.CandyCountX - checkCount || y > board.CandyCountY - checkCount || board.PickedCandies.Count != 2)
+                                if (x > board.CandyCountX - checkCount || y > board.CandyCountY - checkCount || board.PickedCandy == null || board.PickedCandy.targetCandy == null)
                                 {
                                     continue;
                                 }
 
-                                if (board.Candies[x + i, y + j] != board.PickedCandies[0] && board.Candies[x + i, y + j] != board.PickedCandies[1])
+                                if (board.Candies[x + i, y + j] != board.PickedCandy && board.Candies[x + i, y + j] != board.PickedCandy.targetCandy)
                                 {
                                     board.Marker[x + i, y + j] = true;
                                 }
-                                else if (board.Candies[x + i, y + j] == board.PickedCandies[0] || board.Candies[x + i, y + j] == board.PickedCandies[1])
+                                else
                                 {
                                     board.Marker[x + i, y + j] = false;
                                     board.CreateBall(x + i, y + j);
@@ -218,6 +217,6 @@ public class PuzzleMatcher : MonoBehaviour
 
     private void OnDisable()
     {
-        GameManager.Instance.onSwapEvent -= CheckAllPattern;
+        //GameManager.Instance.onSwapEvent -= CheckAllPattern;
     }
 }
