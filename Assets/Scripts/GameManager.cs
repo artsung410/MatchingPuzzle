@@ -21,8 +21,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int MunchkinGoalCount;                      // 먼치킨 목표점수
     [SerializeField] private GameObject MunchkinCheckImage;              // 먼치킨 이미지
 
+    [Header("System")]
+    [SerializeField] private TextMeshProUGUI StatusTMpro;                // 매칭 상황을 알리는 텍스트
+
     [Header("Events")]
-    //public Action onSwapEvent;                                           // 스왑 이벤트
+    //public Action onSwapEvent;                                         // 스왑 이벤트
     public Action onButtonEnableEvent;                                   // 캔디버튼 활성화 이벤트
     public Action onButtonDisableEvent;                                  // 캔디버튼 비활성화 이벤트
 
@@ -41,6 +44,12 @@ public class GameManager : MonoBehaviour
         Instance = this;
         Init();
         Application.targetFrameRate = 60;
+    }
+
+    private void OnEnable()
+    {
+        onButtonEnableEvent += DeActivationStatus;
+        onButtonDisableEvent += ActivationStatus;
     }
 
     private void Init()
@@ -76,8 +85,49 @@ public class GameManager : MonoBehaviour
         ResultScoreTMpro.text = scoreCount.ToString();
     }
 
+    private bool isOnMatching;
+    private void ActivationStatus()
+    {
+        isOnMatching = true;
+        StartCoroutine(OnMatching());
+    }
+
+    private void DeActivationStatus()
+    {
+        StatusTMpro.text = "";
+        isOnMatching = false;
+        StopAllCoroutines();
+    }
+
     public void LoadGameScene()
     {
         SceneManager.LoadScene(0);
+    }
+
+    private void OnDisable()
+    {
+        onButtonEnableEvent -= DeActivationStatus;
+        onButtonDisableEvent -= ActivationStatus;
+    }
+
+    private IEnumerator OnMatching()
+    {
+        string dot = ".";
+        int dotCount = 0;
+        StatusTMpro.text = "매칭중";
+
+        while (true)
+        {
+            ++dotCount;
+            StatusTMpro.text += dot;
+
+            if (dotCount > 5)
+            {
+                StatusTMpro.text = "매칭중";
+                dotCount = 0;
+            }
+
+            yield return new WaitForSeconds(0.5f);
+        }
     }
 }
