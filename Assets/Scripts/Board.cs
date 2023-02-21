@@ -64,7 +64,7 @@ public class Board : MonoBehaviour
         cycleComplete = false;
 
         // DB를 불러온다.
-        // TODO: 좀 더 간결하게 작성
+        // TODO: 좀 더 간결하게 작성하기
         for (int y = 0; y < cellCount; y++)
         {
             CandyInitials[0, y] = StagesDB.Entities[y].C0;
@@ -87,20 +87,23 @@ public class Board : MonoBehaviour
 
                 if (CandyInitials[x, y] == "r" || CandyInitials[x, y] == "y" || CandyInitials[x, y] == "g" || CandyInitials[x, y] == "p")
                 {
+
+                    // 캔디 세팅
                     GameObject candyObj = Instantiate(CandyPf, newPos, Quaternion.identity);
-                    GameObject backGroundObj = Instantiate(BackgroundPf, newPos, Quaternion.identity);
-                    backGroundObj.transform.SetParent(transform);
-
                     Candy candy = candyObj.GetComponent<Candy>();
-                    Background background = backGroundObj.GetComponent<Background>();
-
-                    candy.OnGround = true;                               
-                    candy.InitCoord(x - 1 , y - 1);                      
+                    candy.OnGround = true;
+                    candy.InitCoord(x - 1, y - 1);
                     candyObj.transform.SetParent(transform);
+                    candyObj.transform.localScale = Vector3.one;
                     Candies[x - 1, y - 1] = candy;
 
+                    // 백그라운드 세팅
+                    GameObject backGroundObj = Instantiate(BackgroundPf, newPos, Quaternion.identity);
+                    Background background = backGroundObj.GetComponent<Background>();
                     background.InitCoord(x - 1, y - 1);
                     Backgrounds[x - 1, y - 1] = background;
+                    backGroundObj.transform.SetParent(transform);
+                    backGroundObj.transform.localScale = Vector3.one;
 
                     switch (CandyInitials[x, y])
                     {
@@ -124,21 +127,26 @@ public class Board : MonoBehaviour
                 }
                 else if (CandyInitials[x, y] == "h")
                 {
+                    // 홀 세팅
                     GameObject hole = Instantiate(HolePf, newPos, Quaternion.identity);
                     hole.transform.SetParent(transform);
+                    hole.transform.localScale = Vector3.one;
 
                     if (y == 0 && x != 0 && x != 8)
                     {
+                        // 스포너 세팅
                         GameObject spawner = Instantiate(SpawnerPf, newPos, Quaternion.identity);
                         spawner.transform.SetParent(transform);
+                        spawner.transform.localScale = Vector3.one;
                         Spawners[x - 1] = spawner;
                     }
-
                 }
                 else
                 {
+                    // 빈공간 세팅
                     GameObject empty = Instantiate(EmptyPf, newPos, Quaternion.identity);
                     empty.transform.SetParent(transform);
+                    empty.transform.localScale = Vector3.one;
                 }
             }
         }
@@ -261,6 +269,7 @@ public class Board : MonoBehaviour
                 // 캔디 생성 & 오브젝트 부모 지정
                 GameObject candyObj = Instantiate(CandyPf, Spawners[x].transform.position, Quaternion.identity);      
                 candyObj.transform.SetParent(transform);
+                candyObj.transform.localScale = Vector3.one;
 
                 // 캔디 배치 & 초기화
                 Candy candy = candyObj.GetComponent<Candy>();
@@ -382,12 +391,12 @@ public class Board : MonoBehaviour
         Candies[x, y] = null;
 
         GameObject newObj = Instantiate(MunchkinPF, Backgrounds[x, y].transform.position, Quaternion.identity);
-        Candy cnady = newObj.GetComponent<Candy>();
-        cnady.transform.SetParent(transform);
-
-        cnady.InitCoord(x, y);
-        cnady.SetColor(Color.white, 7);
-        Candies[x, y] = cnady;
+        Candy candy = newObj.GetComponent<Candy>();
+        candy.transform.SetParent(transform);
+        candy.transform.localScale = Vector3.one;
+        candy.InitCoord(x, y);
+        candy.SetColor(Color.white, 7);
+        Candies[x, y] = candy;
     }
     #endregion
 }

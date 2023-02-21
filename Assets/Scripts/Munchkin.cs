@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class Munchkin : Candy, IEndDragHandler, IDragHandler
+public class Munchkin : Candy, IBeginDragHandler, IEndDragHandler, IDragHandler
 {
     [SerializeField]
     private float MoveSpeed;
@@ -29,9 +29,14 @@ public class Munchkin : Candy, IEndDragHandler, IDragHandler
 
     #region drag
     protected Vector2 dragEndPos;
-    protected Vector2 dragPos;
+    protected Vector2 dragBeginPos;
     protected Vector2 moveDir;
     protected Vector2 MousePos;
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        dragBeginPos = CalculateMousePosition();
+    }
 
     public void OnDrag(PointerEventData eventData)
     {
@@ -46,13 +51,13 @@ public class Munchkin : Candy, IEndDragHandler, IDragHandler
         }
 
         isMoving = true;
-        dragEndPos = CalculateMousePostion();
+        dragEndPos = CalculateMousePosition();
         moveDir = CalculateDir();
         StartCoroutine(UpdateMove(moveDir));
     }
 
     // 마우스 포지션 계산
-    private Vector2 CalculateMousePostion()
+    private Vector2 CalculateMousePosition()
     {
         MousePos = Input.mousePosition;
         MousePos = Camera.main.ScreenToWorldPoint(MousePos);
@@ -62,13 +67,15 @@ public class Munchkin : Candy, IEndDragHandler, IDragHandler
     // 방향 계산
     private Vector2 CalculateDir()
     {
-        float distanceX = dragEndPos.x;
-        float distanceY = dragEndPos.y;
+        float distanceX = dragEndPos.x - dragBeginPos.x;
+        float distanceY = dragEndPos.y - dragBeginPos.y;
 
+        // 아크탄젠트를 활용해서 각도를 구한다 (라디안 -> 각도)
         float angle = Mathf.Atan2(distanceY, distanceX) * Mathf.Rad2Deg;
 
         Debug.Log(angle);
 
+        // 1~4분면을 X자로 4개의 영역을 나눠서 대각선으로 드래그해도 특정 좌표로 이동하게 만든다.
         if (angle >= 45 && angle < 135)
         {
             return Vector2.up;
@@ -132,7 +139,7 @@ public class Munchkin : Candy, IEndDragHandler, IDragHandler
             else
             {
                 // 큼지막하게 만들어준다.
-                collision.transform.localScale = new Vector3(8, 8, 8);
+                collision.transform.localScale = new Vector3(2, 2, 2);
             }
         }
 

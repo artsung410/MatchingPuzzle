@@ -53,7 +53,6 @@ public class Candy : MonoBehaviour
     }
 
 
-
     private IEnumerator SetPositioning(Vector2 targetPos)
     {
         float distance = transform.position.y - targetPos.y;
